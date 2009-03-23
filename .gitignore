@@ -1,2 +1,5 @@
 .project
 .loadpath
+.DS_Store
+pkg
+doc
