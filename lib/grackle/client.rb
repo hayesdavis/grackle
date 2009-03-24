@@ -7,52 +7,65 @@ module Grackle
   class TwitterError < StandardError
     attr_accessor :method, :request_uri, :status, :response_body, :response_object
   
-    def initialize(method, request_uri, status, response_body)
+    def initialize(method, request_uri, status, response_body, msg=nil)
       self.method = method
       self.request_uri = request_uri
       self.status = status
       self.response_body = response_body
-      super("#{self.method} #{self.request_uri} => #{self.status}: #{self.response_body}")
+      super(msg||"#{self.method} #{self.request_uri} => #{self.status}: #{self.response_body}")
     end
   end  
   
+  # The Client is the public interface to Grackle. You build Twitter API calls using method chains. See the README for details 
+  # and new for information on valid options.
   class Client
         
     class Request
-      attr_accessor :path, :method
+      attr_accessor :path, :method, :api, :ssl
       
-      def method
-        @method ||= :get
+      def initialize(api=:rest,ssl=true)
+        self.api = api
+        self.ssl = ssl
+        self.method = :get
+        self.path = ''
       end
       
       def <<(path)
         self.path << path
       end
       
-      def path
-        @path ||= ''
-      end
-      
       def path?
         path.length > 0
+      end
+    
+      def url
+        "#{scheme}://#{host}#{path}"
+      end
+         
+      def host
+        APIS[api]
+      end
+    
+      def scheme
+        ssl ? 'https' :'http'
       end
     end
     
     VALID_METHODS = [:get,:post,:put,:delete]
     VALID_FORMATS = [:json,:xml,:atom,:rss]
+
+    APIS = {:rest=>'twitter.com',:search=>'search.twitter.com'}
     
-    REST_API_DOMAIN = 'twitter.com'
-    SEARCH_API_DOMAIN = 'search.twitter.com'
-    
-    attr_accessor :username, :password, :handlers, :default_format, :headers, :ssl, :transport, :request
+    attr_accessor :username, :password, :handlers, :default_format, :headers, :ssl, :api, :transport, :request 
     
     # Arguments (all are optional):
-    #   :username - twitter username to authenticate with
-    #   :password - twitter password to authenticate with
-    #   :handlers - Hash of formats to Handler instances (e.g. {:json=>CustomJSONHandler.new})
-    #   :default_format - Symbol of format to use when no format is specified in an API call (e.g. :json)
-    #   :headers - Hash of string keys and values for headers to pass in the HTTP request to twitter
-    #   :ssl - true or false to turn SSL on or off. Default is off (i.e. http://)
+    # - :username       - twitter username to authenticate with
+    # - :password       - twitter password to authenticate with
+    # - :handlers       - Hash of formats to Handler instances (e.g. {:json=>CustomJSONHandler.new})
+    # - :default_format - Symbol of format to use when no format is specified in an API call (e.g. :json, :xml)
+    # - :headers        - Hash of string keys and values for headers to pass in the HTTP request to twitter
+    # - :ssl            - true or false to turn SSL on or off. Default is off (i.e. http://)
+    # - :api            - one of :rest or :search
     def initialize(options={})
       self.transport = Transport.new
       self.username = options.delete(:username)
@@ -62,15 +75,10 @@ module Grackle
       self.default_format = options[:default_format] || :json 
       self.headers = {'User-Agent'=>'Grackle/1.0'}.merge!(options[:headers]||{})
       self.ssl = options[:ssl] == true
+      self.api = options[:api] || :rest
     end
                
     def method_missing(name,*args)
-      #Check for HTTP method and apply it to the request. 
-      #Can use this for an explict HTTP method
-      if http_method_invocation?(name)
-        self.request.method = name
-        return self
-      end
       #If method is a format name, execute using that format
       if format_invocation?(name)
         return call_with_format(name,*args)
@@ -92,35 +100,57 @@ module Grackle
       self
     end
     
-    protected
-      def rest_api_domain
-        REST_API_DOMAIN
-      end
+    # Used to toggle APIs for a particular request without setting the Client's default API
+    #   client[:rest].users.show.hayesdavis?
+    def [](api_name)
+      request.api = api_name
+      self
+    end
     
-      def search_api_domain
-        SEARCH_API_DOMAIN
-      end
-
+    #Clears any pending request built up by chained methods but not executed
+    def clear
+      self.request = nil
+    end
+    
+    protected
       def call_with_format(format,params={})
         id = params.delete(:id)
-        self.request << "/#{id}" if id
-        self.request << ".#{format}"
-        url = "#{scheme}://#{request_host}#{self.request.path}"
-        req_info = self.request
-        self.request = nil
-        res = transport.request(
-          req_info.method,url,:username=>self.username,:password=>self.password,:headers=>headers,:params=>params
-        )
-        fmt_handler = handler(format) 
-        unless res.status == 200
-          handle_error_response(res,fmt_handler)
-        else
-          fmt_handler.decode_response(res.body)
+        request << "/#{id}" if id
+        request << ".#{format}"
+        res = send_request(params)
+        process_response(format,res)
+      ensure
+        clear
+      end
+      
+      def send_request(params)
+        begin
+          transport.request(
+            request.method,request.url,:username=>self.username,:password=>self.password,:headers=>headers,:params=>params
+          )
+        rescue => e
+          puts e
+          raise TwitterError.new(request.method,request.url,nil,nil,"Unexpected failure making request: #{e}")
+        end        
+      end
+      
+      def process_response(format,res)
+        fmt_handler = handler(format)        
+        begin
+          unless res.status == 200
+            handle_error_response(res,fmt_handler)
+          else
+            fmt_handler.decode_response(res.body)
+          end
+        rescue TwitterError => e
+          raise e
+        rescue => e
+          raise TwitterError.new(res.method,res.request_uri,res.status,res.body,"Unable to decode response: #{e}")
         end
       end
       
       def request
-        @request ||= Request.new
+        @request ||= Request.new(api,ssl)
       end
       
       def handler(format)
@@ -133,21 +163,8 @@ module Grackle
         raise err        
       end
       
-      def http_method_invocation?(name)
-        !self.request.path? && VALID_METHODS.include?(name)
-      end
-      
       def format_invocation?(name)
         self.request.path? && VALID_FORMATS.include?(name)
       end
-            
-      def request_host
-        self.request.path =~ /^\/search/ ? search_api_domain : rest_api_domain
-      end
-    
-      def scheme
-        self.ssl ? 'https' :'http'
-      end
-    
   end
 end
