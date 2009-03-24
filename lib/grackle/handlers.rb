@@ -3,7 +3,7 @@ module Grackle
   # This module contain handlers that know how to take a response body 
   # from Twitter and turn it into a TwitterStruct return value. Handlers are 
   # used by the Client to give back return values from API calls. A handler
-  # is intended to provide a +decode+ method which accepts the response body 
+  # is intended to provide a +decode_response+ method which accepts the response body 
   # as a string.
   module Handlers
     

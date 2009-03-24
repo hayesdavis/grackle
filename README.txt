@@ -17,6 +17,7 @@ will potentially require, however, some modifications to your code that uses Gra
 ==USING GRACKLE
 
 ===Creating a Grackle::Client
+
   require 'grackle'
   client = Grackle::Client(:username=>'your_user',:password=>'yourpass')
 
@@ -27,10 +28,10 @@ Grackle uses a method syntax that corresponds to the Twitter API URLs with a few
 a Twitter URL, that becomes a "." in a chained set of Grackle method calls. Each call in the method chain is used to build 
 Twitter URL path until a particular call is encountered which causes the request to be sent. Methods which will cause a 
 request to be execute include:
-  *A method call ending in "?" will cause an HTTP GET to be executed
-  *A method call ending in "!" will cause an HTTP POST to be executed
-  *If a valid format such as .json, .xml, .rss or .atom is encounted, a get will be executed with that format
-  *A format method can also include a ? or ! to determine GET or POST in that format respectively
+- A method call ending in "?" will cause an HTTP GET to be executed
+- A method call ending in "!" will cause an HTTP POST to be executed
+- If a valid format such as .json, .xml, .rss or .atom is encounted, a get will be executed with that format
+- A format method can also include a ? or ! to determine GET or POST in that format respectively
 
 ===GETting Data
 Invoking the API method "/users/show" in XML format for the Twitter user "some_user" looks like
@@ -59,23 +60,33 @@ Or, with JSON
 Or, using the default format
   client.statuses.update! :status=>'this status is from grackle' #POST to http://twitter.com/statuses/update.json
 
-===Search
-Search works the same as everything else but your queries get submitted to search.twitter.com
-  client.search? :q=>'grackle' #http://search.twitter.com/search.json?q=grackle
+===Toggling APIs
+By default, the Grackle::Client sends all requests to the Twitter REST API. If you want to send requests to the Twitter Search API, just 
+set Grackle::Client.api to :search. To toggle back, set it to be :rest. All requests made after setting this 
+attribute will go to that API.
+
+If you want to make a specific request to one API and not change the Client's overall api setting beyond that request, you can use the 
+bracket syntax like so:
+  client[:search].trends/daily? :exclue=>'hashtags'
+  client[:rest].users.show? :id=>'hayesdavis'
+ 
+Search and REST requests are all built using the same method chaining and termination conventions.
 
 ===Parameter handling
-  *All parameters are URL encoded as necessary.
-  *If you use a File object as a parameter it will be POSTed to Twitter in a multipart request.
-  *If you use a Time object as a parameter, .httpdate will be called on it and that value will be used
+- All parameters are URL encoded as necessary.
+- If you use a File object as a parameter it will be POSTed to Twitter in a multipart request.
+- If you use a Time object as a parameter, .httpdate will be called on it and that value will be used
 
 ===Return Values
-Regardless of the format used, Grackle returns a Grackle::TwitterStruct (which is mostly just an OpenStruct) of data. The attributes 
+Regardless of the format used, Grackle returns an OpenStruct (actually a Grackle::TwitterStruct) of data. The attributes 
 available on these structs correspond to the data returned by Twitter.
 
 ===Dealing with Errors
 If the request to Twitter does not return a status code of 200, then a TwitterError is thrown. This contains the HTTP method used, 
 the full request URI, the response status, the response body in text and a response object build by parsing the formatted error 
 returned by Twitter. It's a good idea to wrap your API calls with rescue clauses for Grackle::TwitterError.
+
+If there is an unexpected connection error or Twitter returns data in the wrong format (which it can do), you'll still get a TwitterError.
 
 ===Formats
 Twitter allows you to request data in particular formats. Grackle currently supports JSON and XML. The Grackle::Client has a 
@@ -85,8 +96,8 @@ chain as described above, but use a "?" or "!" then the Grackle::Client.default_
 == REQUIREMENTS:
 
 You'll need the following gems to use all features of Grackle:
-  *json_pure
-  *httpclient 
+- json_pure
+- httpclient 
 
 == INSTALL:
 
