@@ -20,7 +20,7 @@ will potentially require, however, some modifications to your code that uses Gra
 ===Creating a Grackle::Client
 
   require 'grackle'
-  client = Grackle::Client(:username=>'your_user',:password=>'yourpass')
+  client = Grackle::Client.new(:username=>'your_user',:password=>'yourpass')
 
 See Grackle::Client for more information about valid arguments to the constructor including for custom headers and SSL.
 
@@ -102,7 +102,8 @@ You'll need the following gems to use all features of Grackle:
 
 == INSTALL:
 
-sudo gem install grackle
+sudo gem sources -a http://gems.github.com
+sudo gem install hayesdavis-grackle
 
 == LICENSE:
 
