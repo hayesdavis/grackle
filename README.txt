@@ -1,7 +1,8 @@
-grackle
-    by Hayes Davis
-    http://www.appozite.com
-    http://hayesdavis.net
+=grackle
+by Hayes Davis
+	hayes@appozite.com
+	http://www.appozite.com
+	http://hayesdavis.net
 
 == DESCRIPTION
 Grackle is a lightweight Ruby wrapper around the Twitter REST and Search APIs. It's based on my experience using the 
@@ -67,7 +68,7 @@ attribute will go to that API.
 
 If you want to make a specific request to one API and not change the Client's overall api setting beyond that request, you can use the 
 bracket syntax like so:
-  client[:search].trends/daily? :exclue=>'hashtags'
+  client[:search].trends.daily? :exclue=>'hashtags'
   client[:rest].users.show? :id=>'hayesdavis'
  
 Search and REST requests are all built using the same method chaining and termination conventions.
