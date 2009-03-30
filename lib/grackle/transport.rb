@@ -51,7 +51,7 @@ module Grackle
           request_standard(method,url,options)
         end
       rescue Timeout::Error
-        raise "Timeout while #{req.method}ing #{url.to_s}"
+        raise "Timeout while #{method}ing #{url.to_s}"
       end
     end
     
