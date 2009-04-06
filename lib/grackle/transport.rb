@@ -13,6 +13,8 @@ module Grackle
   
   class Transport
   
+    CRLF = "\r\n"
+  
     def get(string_url,options={})
       request(:get,url,options)
     end
@@ -45,35 +47,34 @@ module Grackle
       end
       url = URI.parse(string_url)
       begin
-        if file_param?(options[:params])
-          request_multipart(method,url,options)
-        else
-          request_standard(method,url,options)
-        end
+        execute_request(method,url,options)
       rescue Timeout::Error
         raise "Timeout while #{method}ing #{url.to_s}"
       end
     end
     
-    def request_multipart(method, url, options={})
-      require 'httpclient' unless defined? HTTPClient
-      client = HTTPClient.new
-      if options[:username] && options[:password]
-        client.set_auth(url.to_s,options.delete(:username),options.delete(:password))
-      end
-      res = client.request(method,url.to_s,nil,options[:params],options[:headers])
-      Response.new(method,url.to_s,res.status,res.content)
-    end
-    
-    def request_standard(method,url,options={})
+    def execute_request(method,url,options={})
       Net::HTTP.new(url.host, url.port).start do |http| 
         req = req_class(method).new(url.request_uri)
         add_headers(req,options[:headers])
-        add_form_data(req,options[:params])
-        add_basic_auth(req,options[:username],options[:password])
+        multipart = false
+        if file_param?(options[:params])
+          add_multipart_data(req,options[:params])
+          multipart = true
+        else
+          add_form_data(req,options[:params])
+        end
+        if options.has_key? :auth
+          if options[:auth][:type] == :basic
+            add_basic_auth(req,options[:auth])
+          elsif options[:auth][:type] == :oauth
+            add_oauth(req,options[:auth])
+          end
+        end
+        dump_request(req)
         res = http.request(req)
         Response.new(method,url.to_s,res.code.to_i,res.body)
-      end        
+      end
     end
 
     def query_string(params)
@@ -128,10 +129,52 @@ module Grackle
         end
       end
     
-      def add_basic_auth(req,username,password)
+      def add_multipart_data(req,params)
+        boundary = Time.now.to_i.to_s(16)
+        req["Content-Type"] = "multipart/form-data; boundary=#{boundary}"
+        body = ""
+        params.each do |key,value|
+          esc_key = url_encode(key)
+          body << "--#{boundary}#{CRLF}"
+          if value.respond_to?(:read)
+            mime_type = MIME::Types.type_for(value.path)[0] || MIME::Types["application/octet-stream"][0]
+            body << "Content-Disposition: form-data; name=\"#{esc_key}\"; filename=\"#{File.basename(value.path)}\"#{CRLF}"
+            body << "Content-Type: #{mime_type.simplified}#{CRLF*2}"
+            body << value.read
+          else
+            body << "Content-Disposition: form-data; name=\"#{esc_key}\"#{CRLF*2}#{value}"
+          end
+          body << CRLF
+        end
+        body << "--#{boundary}--#{CRLF*2}"
+        req.body = body
+        req["Content-Length"] = req.body.size
+      end
+    
+      def add_basic_auth(req,auth)
+        username = auth[:username]
+        password = auth[:password]
         if username && password
           req.basic_auth(username,password)
         end
+      end
+      
+      def add_oauth(req,auth)
+        options = auth.reject do |key,value|
+          [:consumer_key,:consumer_secret,:access_token,:access_secret].include?(key)
+        end
+        consumer = OAuth::Consumer.new(auth[:consumer_key],auth[:consumer_secret],options)
+        access_token = OAuth::AccessToken.new(consumer,auth[:access_token],auth[:access_secret])
+        access_token.consumer.sign!(req,access_token)
+      end
+
+      def dump_request(req)
+        puts "Sending Request"
+        puts"#{req.method} #{req.path}"
+        req.each_header do |key, value|
+          puts "\t#{key}=#{value}"
+        end
+        #puts req.body
       end
   end
 end

@@ -56,26 +56,44 @@ module Grackle
 
     APIS = {:rest=>'twitter.com',:search=>'search.twitter.com'}
     
-    attr_accessor :username, :password, :handlers, :default_format, :headers, :ssl, :api, :transport, :request 
+    TWITTER_OAUTH_SPEC = {
+      :site=>'http://twitter.com',
+      :request_token_path=>'/oauth/request_token',
+      :access_token_path=>'/oauth/access_token',
+      :authorize_path=>'/oauth/authorize'
+    }
+    
+    attr_accessor :auth, :handlers, :default_format, :headers, :ssl, :api, :transport, :request 
     
     # Arguments (all are optional):
-    # - :username       - twitter username to authenticate with
-    # - :password       - twitter password to authenticate with
+    # - :username       - twitter username to authenticate with (deprecated in favor of :auth arg)
+    # - :password       - twitter password to authenticate with (deprecated in favor of :auth arg)
     # - :handlers       - Hash of formats to Handler instances (e.g. {:json=>CustomJSONHandler.new})
     # - :default_format - Symbol of format to use when no format is specified in an API call (e.g. :json, :xml)
     # - :headers        - Hash of string keys and values for headers to pass in the HTTP request to twitter
     # - :ssl            - true or false to turn SSL on or off. Default is off (i.e. http://)
     # - :api            - one of :rest or :search
+    # - :auth           - Hash of authentication type and credentials. Must have :type key with value one of :basic or :oauth
+    #   - :type=>:basic  - Include :username and :password keys
+    #   - :type=>:oauth  - Include :consumer_key, :consumer_secret, :access_token and :access_secret keys
     def initialize(options={})
       self.transport = Transport.new
-      self.username = options.delete(:username)
-      self.password = options.delete(:password)
       self.handlers = {:json=>Handlers::JSONHandler.new,:xml=>Handlers::XMLHandler.new,:unknown=>Handlers::StringHandler.new}
       self.handlers.merge!(options[:handlers]||{})
       self.default_format = options[:default_format] || :json 
-      self.headers = {'User-Agent'=>'Grackle/1.0'}.merge!(options[:headers]||{})
+      self.headers = {"User-Agent"=>"Grackle/#{Grackle::VERSION}"}.merge!(options[:headers]||{})
       self.ssl = options[:ssl] == true
       self.api = options[:api] || :rest
+      self.auth = {}
+      if options.has_key?(:username) || options.has_key?(:password)
+        self.auth.merge!({:type=>:basic,:username=>options[:username],:password=>options[:password]})
+      end
+      if options.has_key?(:auth)
+        self.auth = options[:auth]
+        if auth[:type] == :oauth
+          self.auth = TWITTER_OAUTH_SPEC.merge(auth)
+        end
+      end
     end
                
     def method_missing(name,*args)
@@ -112,6 +130,36 @@ module Grackle
       self.request = nil
     end
     
+    #Deprecated in favor of using the auth attribute.
+    def username
+      if auth[:type] == :basic
+        auth[:username]
+      end
+    end
+    
+    #Deprecated in favor of using the auth attribute.    
+    def username=(value)
+      unless auth[:type] == :basic
+        auth[:type] = :basic        
+      end
+      auth[:username] = value
+    end
+    
+    #Deprecated in favor of using the auth attribute.    
+    def password
+      if auth[:type] == :basic
+        auth[:password]
+      end
+    end
+    
+    #Deprecated in favor of using the auth attribute.    
+    def password=(value)
+      unless auth[:type] == :basic
+        auth[:type] = :basic
+      end
+      auth[:password] = value
+    end
+    
     protected
       def call_with_format(format,params={})
         id = params.delete(:id)
@@ -126,7 +174,7 @@ module Grackle
       def send_request(params)
         begin
           transport.request(
-            request.method,request.url,:username=>self.username,:password=>self.password,:headers=>headers,:params=>params
+            request.method,request.url,:auth=>auth,:headers=>headers,:params=>params
           )
         rescue => e
           puts e

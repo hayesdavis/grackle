@@ -1,7 +1,7 @@
 module Grackle
 
   # :stopdoc:
-  VERSION = '0.0.5'
+  VERSION = '0.0.6'
   LIBPATH = ::File.expand_path(::File.dirname(__FILE__)) + ::File::SEPARATOR
   PATH = ::File.dirname(LIBPATH) + ::File::SEPARATOR
   # :startdoc:
@@ -20,6 +20,8 @@ require 'open-uri'
 require 'net/http'
 require 'rexml/document'
 require 'json'
+require 'oauth'
+require 'oauth/client'
 
 require 'grackle/utils'
 require 'grackle/transport'
