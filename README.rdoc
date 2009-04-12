@@ -1,5 +1,6 @@
 =grackle
 by Hayes Davis
+- http://twitter.com/hayesdavis
 - hayes [at] appozite.com
 - http://cheaptweet.com
 - http://www.appozite.com
