@@ -1,6 +1,6 @@
 module Grackle
   
-  class Response
+  class Response #:nodoc:
     attr_accessor :method, :request_uri, :status, :body
     
     def initialize(method,request_uri,status,body)
@@ -12,24 +12,10 @@ module Grackle
   end
   
   class Transport
+    
+    attr_accessor :debug
   
     CRLF = "\r\n"
-  
-    def get(string_url,options={})
-      request(:get,url,options)
-    end
-    
-    def post(string_url,options={})
-      request(:post,url,options)
-    end
-    
-    def put(url,options={})
-      request(:put,url,options)
-    end
-    
-    def delete(url,options={})
-      request(:delete,url,options)
-    end
     
     def req_class(method)
       case method
@@ -40,6 +26,11 @@ module Grackle
       end
     end
     
+    # Options are one of
+    # - :params - a hash of parameters to be sent with the request. If a File is a parameter value, \
+    #             a multipart request will be sent. If a Time is included, .httpdate will be called on it.
+    # - :headers - a hash of headers to send with the request
+    # - :auth - a hash of authentication parameters for either basic or oauth
     def request(method, string_url, options={})
       params = stringify_params(options[:params])
       if method == :get && params
@@ -57,10 +48,8 @@ module Grackle
       Net::HTTP.new(url.host, url.port).start do |http| 
         req = req_class(method).new(url.request_uri)
         add_headers(req,options[:headers])
-        multipart = false
         if file_param?(options[:params])
           add_multipart_data(req,options[:params])
-          multipart = true
         else
           add_form_data(req,options[:params])
         end
@@ -71,8 +60,9 @@ module Grackle
             add_oauth(req,options[:auth])
           end
         end
-        dump_request(req)
+        dump_request(req) if debug
         res = http.request(req)
+        dump_response(res) if debug
         Response.new(method,url.to_s,res.code.to_i,res.body)
       end
     end
@@ -161,20 +151,30 @@ module Grackle
       
       def add_oauth(req,auth)
         options = auth.reject do |key,value|
-          [:consumer_key,:consumer_secret,:access_token,:access_secret].include?(key)
+          [:type,:consumer_key,:consumer_secret,:access_token,:access_secret].include?(key)
         end
         consumer = OAuth::Consumer.new(auth[:consumer_key],auth[:consumer_secret],options)
         access_token = OAuth::AccessToken.new(consumer,auth[:access_token],auth[:access_secret])
-        access_token.consumer.sign!(req,access_token)
+        consumer.sign!(req,access_token)
       end
 
-      def dump_request(req)
-        puts "Sending Request"
-        puts"#{req.method} #{req.path}"
-        req.each_header do |key, value|
-          puts "\t#{key}=#{value}"
+      private
+        def dump_request(req)
+          puts "Sending Request"
+          puts"#{req.method} #{req.path}"
+          dump_headers(req)
         end
-        #puts req.body
-      end
+      
+        def dump_response(res)
+          puts "Received Response"
+          dump_headers(res)
+          puts res.body
+        end
+      
+        def dump_headers(msg)
+          msg.each_header do |key, value|
+            puts "\t#{key}=#{value}"
+          end
+        end
   end
 end
