@@ -151,10 +151,10 @@ module Grackle
       
       def add_oauth(req,auth)
         options = auth.reject do |key,value|
-          [:type,:consumer_key,:consumer_secret,:access_token,:access_secret].include?(key)
+          [:type,:consumer_key,:consumer_secret,:token,:token_secret].include?(key)
         end
         consumer = OAuth::Consumer.new(auth[:consumer_key],auth[:consumer_secret],options)
-        access_token = OAuth::AccessToken.new(consumer,auth[:access_token],auth[:access_secret])
+        access_token = OAuth::AccessToken.new(consumer,auth[:token],auth[:token_secret])
         consumer.sign!(req,access_token)
       end
 
