@@ -113,7 +113,7 @@ chain as described above, but use a "?" or "!" then the Grackle::Client.default_
 == REQUIREMENTS:
 
 You'll need the following gems to use all features of Grackle:
-- json_pure
+- json
 - oauth 
 - mime-types
 
