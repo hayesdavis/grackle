@@ -41,7 +41,7 @@ module Grackle
   #     :type=>:oauth,
   #     :consumer_key=>'SOMECONSUMERKEYFROMTWITTER, :consumer_token=>'SOMECONSUMERTOKENFROMTWITTER',
   #     :token=>'ACCESSTOKENACQUIREDONUSERSBEHALF', :token_secret=>'SUPERSECRETACCESSTOKENSECRET'
-  #   }} 
+  #   }) 
   class Client
     
     class Request #:nodoc:

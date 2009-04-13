@@ -33,7 +33,7 @@ Before you do anything else, you'll need to
     :type=>:oauth,
     :consumer_key=>'SOMECONSUMERKEYFROMTWITTER', :consumer_token=>'SOMECONSUMERTOKENFROMTWITTER',
     :token=>'ACCESSTOKENACQUIREDONUSERSBEHALF', :token_secret=>'SUPERSECRETACCESSTOKENSECRET'
-  }}
+  })
   
 ====Using No Auth
   client = Grackle::Client.new
@@ -85,7 +85,7 @@ attribute will go to that API.
 
 If you want to make a specific request to one API and not change the Client's overall api setting beyond that request, you can use the 
 bracket syntax like so:
-  client[:search].trends.daily? :exclue=>'hashtags'
+  client[:search].trends.daily? :exclude=>'hashtags'
   client[:rest].users.show? :id=>'hayesdavis'
  
 Search and REST requests are all built using the same method chaining and termination conventions.
