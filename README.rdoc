@@ -52,31 +52,33 @@ request to be execute include:
 - A format method can also include a ? or ! to determine GET or POST in that format respectively
 
 ===GETting Data
-Invoking the API method "/users/show" in XML format for the Twitter user "some_user" looks like
-  client.users.show.xml :id=>'some_user' #http://twitter.com/users/show.xml?id=some_user
+The preferred and simplest way of executing a GET is to use the "?" method notation. This will use the default client 
+format (usually JSON, but see Formats section below):
+  client.users.show? :screen_name=>'some_user' #http://twitter.com/users/show.json?screen_name=some_user
 
-Or using the JSON format:
-  client.users.show.json :id=>'some_user' #http://twitter.com/users/show.json?id=some_user
+You can force XML format by doing:
+  client.users.show.xml? :screen_name=>'some_user' #http://twitter.com/users/show.xml?scren_name=some_user
+  
+You can force JSON:
+  client.users.show.json? :screen_name=>'some_user' #http://twitter.com/users/show.json?screen_name=some_user
 
-Or, since Twitter also allows certain ids to be part of their URLs, this works:
-  client.users.show.some_user.json #http://twitter.com/users/show/some_user.json
-
-The client has a default format of :json so if you want to use the above call with the default format you can do:
+Or, since Twitter also allows certain ids/screen_names to be part of their URLs, this works:
   client.users.show.some_user? #http://twitter.com/users/show/some_user.json
 
-If you include a "?" at the end of any method name, that signals to the Grackle client that you want to execute an HTTP GET request.
+If you use an explicit format, you can leave off the "?" like so:
+  client.users.show.xml :screen_name=>'some_user' #http://twitter.com/users/show.xml?scren_name=some_user
 
 ===POSTing data
 To use Twitter API methods that require an HTTP POST, you need to end your method chain with a bang (!)
 
-For example, to update the authenticated user's status using the XML format:
+The preferred way is to use the Client's default format (usually JSON, but see Formats section below):
+  client.statuses.update! :status=>'this status is from grackle' #POST to http://twitter.com/statuses/update.json
+
+You can force a format. To update the authenticated user's status using the XML format:
   client.statuses.update.xml! :status=>'this status is from grackle' #POST to http://twitter.com/statuses/update.xml
 
 Or, with JSON
   client.statuses.update.json! :status=>'this status is from grackle' #POST to http://twitter.com/statuses/update.json
-
-Or, using the default format
-  client.statuses.update! :status=>'this status is from grackle' #POST to http://twitter.com/statuses/update.json
 
 ===Toggling APIs
 By default, the Grackle::Client sends all requests to the Twitter REST API. If you want to send requests to the Twitter Search API, just 
@@ -107,9 +109,11 @@ returned by Twitter. It's a good idea to wrap your API calls with rescue clauses
 If there is an unexpected connection error or Twitter returns data in the wrong format (which it can do), you'll still get a TwitterError.
 
 ===Formats
-Twitter allows you to request data in particular formats. Grackle currently supports JSON and XML. The Grackle::Client has a 
-default_format you can specify. By default, the default_format is :json. If you don't include a named format in your method 
-chain as described above, but use a "?" or "!" then the Grackle::Client.default_format is used.
+Twitter allows you to request data in particular formats. Grackle automatically parses JSON and XML formatted responses 
+and returns an OpenStruct. If you specify a format that Grackle doesn't parse for you, you'll receive a string containing 
+the raw response body. The Grackle::Client has a default_format you can specify. By default, the default_format is :json. 
+If you don't include a named format in your method chain as described above, but use a "?" or "!" then the 
+Grackle::Client.default_format is used.
 
 == REQUIREMENTS:
 
