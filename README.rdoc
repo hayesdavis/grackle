@@ -26,7 +26,7 @@ Before you do anything else, you'll need to
 
 ===Creating a Grackle::Client
 ====Using Basic Auth
-  client = Grackle::Client.new(:auth=>{:type=:basic,:username=>'your_user',:password=>'yourpass'})
+  client = Grackle::Client.new(:auth=>{:type=>:basic,:username=>'your_user',:password=>'yourpass'})
 
 ====Using OAuth
   client = Grackle::Client.new(:auth=>{
