@@ -5,10 +5,11 @@ class TestClient < Test::Unit::TestCase
   #Used for mocking HTTP requests
   class Net::HTTP
     class << self
-      attr_accessor :response, :request
+      attr_accessor :response, :request, :last_instance
     end
    
     def request(req)
+      self.class.last_instance = self
       self.class.request = req
       self.class.response
     end
@@ -60,6 +61,7 @@ class TestClient < Test::Unit::TestCase
     value = client.users.show.json? :screen_name=>'test_user'
     assert_equal(:get,client.transport.method)
     assert_equal('http',client.transport.url.scheme)
+    assert(!Net::HTTP.last_instance.use_ssl?,'Net::HTTP instance should not be set to use SSL')
     assert_equal('twitter.com',client.transport.url.host)
     assert_equal('/users/show.json',client.transport.url.path)
     assert_equal('test_user',client.transport.options[:params][:screen_name])
@@ -89,6 +91,7 @@ class TestClient < Test::Unit::TestCase
     client = new_client(200,'[{"id":1,"text":"test 1"}]',:ssl=>true)
     client.statuses.public_timeline?
     assert_equal("https",client.transport.url.scheme)
+    assert(Net::HTTP.last_instance.use_ssl?,'Net::HTTP instance should be set to use SSL')
   end
   
   def test_default_format

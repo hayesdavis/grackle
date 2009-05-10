@@ -45,7 +45,9 @@ module Grackle
     end
     
     def execute_request(method,url,options={})
-      Net::HTTP.new(url.host, url.port).start do |http| 
+      conn = Net::HTTP.new(url.host, url.port)
+      conn.use_ssl = (url.scheme == 'https')
+      conn.start do |http| 
         req = req_class(method).new(url.request_uri)
         add_headers(req,options[:headers])
         if file_param?(options[:params])
