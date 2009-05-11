@@ -59,7 +59,7 @@ module Grackle
           if options[:auth][:type] == :basic
             add_basic_auth(req,options[:auth])
           elsif options[:auth][:type] == :oauth
-            add_oauth(req,options[:auth])
+            add_oauth(http,req,options[:auth])
           end
         end
         dump_request(req) if debug
@@ -151,9 +151,12 @@ module Grackle
         end
       end
       
-      def add_oauth(req,auth)
+      def add_oauth(conn,req,auth)
         options = auth.reject do |key,value|
           [:type,:consumer_key,:consumer_secret,:token,:token_secret].include?(key)
+        end
+        unless options.has_key?(:site)
+          options[:site] = oauth_site(conn,req)
         end
         consumer = OAuth::Consumer.new(auth[:consumer_key],auth[:consumer_secret],options)
         access_token = OAuth::AccessToken.new(consumer,auth[:token],auth[:token_secret])
@@ -161,6 +164,14 @@ module Grackle
       end
 
       private
+        def oauth_site(conn,req)
+          site = "#{(conn.use_ssl? ? "https" : "http")}://#{conn.address}"
+          if (conn.use_ssl? && conn.port != 443) || (!conn.use_ssl? && conn.port != 80) 
+            site << ":#{conn.port}"
+          end
+          site
+        end
+        
         def dump_request(req)
           puts "Sending Request"
           puts"#{req.method} #{req.path}"
