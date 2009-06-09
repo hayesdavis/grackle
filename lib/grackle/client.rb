@@ -39,7 +39,7 @@ module Grackle
   # you've got all the necessary tokens and keys:
   #   client = Grackle::Client.new(:auth=>{
   #     :type=>:oauth,
-  #     :consumer_key=>'SOMECONSUMERKEYFROMTWITTER, :consumer_token=>'SOMECONSUMERTOKENFROMTWITTER',
+  #     :consumer_key=>'SOMECONSUMERKEYFROMTWITTER, :consumer_secret=>'SOMECONSUMERTOKENFROMTWITTER',
   #     :token=>'ACCESSTOKENACQUIREDONUSERSBEHALF', :token_secret=>'SUPERSECRETACCESSTOKENSECRET'
   #   }) 
   class Client

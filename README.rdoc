@@ -31,7 +31,7 @@ Before you do anything else, you'll need to
 ====Using OAuth
   client = Grackle::Client.new(:auth=>{
     :type=>:oauth,
-    :consumer_key=>'SOMECONSUMERKEYFROMTWITTER', :consumer_token=>'SOMECONSUMERTOKENFROMTWITTER',
+    :consumer_key=>'SOMECONSUMERKEYFROMTWITTER', :consumer_secret=>'SOMECONSUMERTOKENFROMTWITTER',
     :token=>'ACCESSTOKENACQUIREDONUSERSBEHALF', :token_secret=>'SUPERSECRETACCESSTOKENSECRET'
   })
   
