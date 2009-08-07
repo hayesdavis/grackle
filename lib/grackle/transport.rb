@@ -67,7 +67,11 @@ module Grackle
         dump_request(req) if debug
         res = http.request(req)
         dump_response(res) if debug
-        Response.new(method,url.to_s,res.code.to_i,res.body)
+        if res.response['location']
+          execute_request(method, url, options.merge(:params => {res.response['location'] => res.response['location']}))
+        else 
+          Response.new(method,url.to_s,res.code.to_i,res.body)
+        end
       end
     end
 
