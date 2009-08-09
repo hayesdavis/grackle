@@ -16,6 +16,7 @@ module Grackle
     attr_accessor :debug
   
     CRLF = "\r\n"
+    DEFAULT_REDIRECT_LIMIT = 5
     
     def req_class(method)
       case method
@@ -67,8 +68,9 @@ module Grackle
         dump_request(req) if debug
         res = http.request(req)
         dump_response(res) if debug
-        if res.response['location']
-          execute_request(method, url, options.merge(:params => {res.response['location'] => res.response['location']}))
+        redirect_limit = options[:redirect_limit] || DEFAULT_REDIRECT_LIMIT
+        if res.code.to_s =~ /^30\d$/ && redirect_limit > 0
+          execute_request(method,URI.parse(res['location']),options.merge(:redirect_limit=>redirect_limit-1))
         else 
           Response.new(method,url.to_s,res.code.to_i,res.body)
         end

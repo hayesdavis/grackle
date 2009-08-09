@@ -5,21 +5,26 @@ class TestClient < Test::Unit::TestCase
   #Used for mocking HTTP requests
   class Net::HTTP
     class << self
-      attr_accessor :response, :request, :last_instance
+      attr_accessor :response, :request, :last_instance, :responder
     end
    
     def request(req)
       self.class.last_instance = self
-      self.class.request = req
-      self.class.response
+      if self.class.responder
+        self.class.responder.call(self,req)        
+      else
+        self.class.request = req
+        self.class.response
+      end
     end
   end  
   
-  #Mock responses that conform mostly to HTTPResponse's interface
-  class MockResponse
-    include Net::HTTPHeader
+  #Mock responses that conform to HTTPResponse's interface
+  class MockResponse < Net::HTTPResponse
+    #include Net::HTTPHeader
     attr_accessor :code, :body
     def initialize(code,body,headers={})
+      super
       self.code = code
       self.body = body
       headers.each do |name, value|
@@ -54,6 +59,29 @@ class TestClient < Test::Unit::TestCase
     def decode_response(body)
       decode_value  
     end
+  end
+  
+  def test_redirects
+    redirects = 2 #Check that we can follow 2 redirects before getting to original request
+    req_count = 0
+    responder = Proc.new do |inst, req|
+      req_count += 1
+      #Store the original request
+      if req_count == 1
+        inst.class.request = req 
+      else
+        assert_equal("/somewhere_else#{req_count-1}.json",req.path)
+      end
+      if req_count <= redirects
+        MockResponse.new(302,"You are being redirected",'location'=>"http://twitter.com/somewhere_else#{req_count}.json")
+      else
+        inst.class.response
+      end
+    end
+    with_http_responder(responder) do
+      test_simple_get_request
+    end
+    assert_equal(redirects+1,req_count)
   end
   
   def test_timeouts
@@ -157,6 +185,13 @@ class TestClient < Test::Unit::TestCase
   end
   
   private
+    def with_http_responder(responder)
+      Net::HTTP.responder = responder
+      yield
+    ensure
+      Net::HTTP.responder = nil
+    end
+    
     def new_client(response_status, response_body, client_opts={})
       client = Grackle::Client.new(client_opts)
       client.transport = MockTransport.new(response_status,response_body)
