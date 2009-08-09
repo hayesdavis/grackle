@@ -69,7 +69,7 @@ module Grackle
         res = http.request(req)
         dump_response(res) if debug
         redirect_limit = options[:redirect_limit] || DEFAULT_REDIRECT_LIMIT
-        if res.code.to_s =~ /^30\d$/ && redirect_limit > 0
+        if res.code.to_s =~ /^3\d\d$/ && redirect_limit > 0 && res['location']
           execute_request(method,URI.parse(res['location']),options.merge(:redirect_limit=>redirect_limit-1))
         else 
           Response.new(method,url.to_s,res.code.to_i,res.body)
