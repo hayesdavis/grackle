@@ -88,7 +88,7 @@ module Grackle
       :authorize_path=>'/oauth/authorize'
     }
     
-    attr_accessor :auth, :handlers, :default_format, :headers, :ssl, :api, :transport, :request, :api_hosts
+    attr_accessor :auth, :handlers, :default_format, :headers, :ssl, :api, :transport, :request, :api_hosts, :timeout
     
     # Arguments (all are optional):
     # - :username       - twitter username to authenticate with (deprecated in favor of :auth arg)
@@ -110,6 +110,7 @@ module Grackle
       self.ssl = options[:ssl] == true
       self.api = options[:api] || :rest
       self.api_hosts = TWITTER_API_HOSTS.clone
+      self.timeout = options[:timeout] || 60
       self.auth = {}
       if options.has_key?(:username) || options.has_key?(:password)
         #Use basic auth if :username and :password args are passed in
@@ -202,7 +203,7 @@ module Grackle
       def send_request(params)
         begin
           transport.request(
-            request.method,request.url,:auth=>auth,:headers=>headers,:params=>params
+            request.method,request.url,:auth=>auth,:headers=>headers,:params=>params, :timeout => timeout
           )
         rescue => e
           puts e

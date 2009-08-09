@@ -30,7 +30,7 @@ class TestClient < Test::Unit::TestCase
   
   #Transport that collects info on requests and responses for testing purposes
   class MockTransport < Grackle::Transport
-    attr_accessor :status, :body, :method, :url, :options
+    attr_accessor :status, :body, :method, :url, :options, :timeout
     
     def initialize(status,body,headers={})
       Net::HTTP.response = MockResponse.new(status,body,headers)
@@ -54,6 +54,13 @@ class TestClient < Test::Unit::TestCase
     def decode_response(body)
       decode_value  
     end
+  end
+  
+  def test_timeouts
+    client = new_client(200,'{"id":12345,"screen_name":"test_user"}')
+    assert_equal(60, client.timeout)
+    client.timeout = 30
+    assert_equal(30, client.timeout)
   end
   
   def test_simple_get_request
