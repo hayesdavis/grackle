@@ -143,11 +143,23 @@ class TestClient < Test::Unit::TestCase
     client = new_client(200,'[{"id":1,"text":"test 1"}]',:api=>:search)
     client.search? :q=>'test'
     assert_equal('search.twitter.com',client.transport.url.host)
+
     client[:rest].users.show.some_user?
     assert_equal('twitter.com',client.transport.url.host)
+
     client.api = :search
     client.trends?
     assert_equal('search.twitter.com',client.transport.url.host)
+    
+    client.api = :v1
+    client.search? :q=>'test'
+    assert_equal('api.twitter.com',client.transport.url.host)
+    assert_match(%r{^/1/search},client.transport.url.path)
+
+    client.api = :rest
+    client[:v1].users.show.some_user?
+    assert_equal('api.twitter.com',client.transport.url.host)
+    assert_match(%r{^/1/users/show/some_user},client.transport.url.path)
   end
   
   def test_headers

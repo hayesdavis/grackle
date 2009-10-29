@@ -1,5 +1,0 @@
-== 0.1.0 (2009-04-12)
-* Added OAuth authentication
-* Deprecated :username and :password Grackle::Client constructor params
-* Changed multipart upload implementation and removed dependency on httpclient gem
-* Added dependency on mime-types gem

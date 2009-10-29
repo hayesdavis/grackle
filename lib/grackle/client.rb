@@ -79,7 +79,15 @@ module Grackle
     VALID_METHODS = [:get,:post,:put,:delete]
     VALID_FORMATS = [:json,:xml,:atom,:rss]
 
-    TWITTER_API_HOSTS = {:rest=>'twitter.com',:search=>'search.twitter.com'}
+    # Contains the mapping of API name symbols to actual host (and path) 
+    # prefixes to use with requests. You can add your own to this hash and 
+    # refer to it wherever Grackle::Client uses an API symbol. You may wish 
+    # to do this when Twitter introduces API versions greater than 1.
+    TWITTER_API_HOSTS = {
+      :rest=>'twitter.com',
+      :search=>'search.twitter.com',
+      :v1=>'api.twitter.com/1'
+    }
     
     #Basic OAuth information needed to communicate with Twitter
     TWITTER_OAUTH_SPEC = {
@@ -97,7 +105,7 @@ module Grackle
     # - :default_format - Symbol of format to use when no format is specified in an API call (e.g. :json, :xml)
     # - :headers        - Hash of string keys and values for headers to pass in the HTTP request to twitter
     # - :ssl            - true or false to turn SSL on or off. Default is off (i.e. http://)
-    # - :api            - one of :rest or :search. :rest is the default
+    # - :api            - one of :rest, :search or :v1. :rest is the default
     # - :auth           - Hash of authentication type and credentials. Must have :type key with value one of :basic or :oauth
     #   - :type=>:basic  - Include :username and :password keys
     #   - :type=>:oauth  - Include :consumer_key, :consumer_secret, :token and :token_secret keys
