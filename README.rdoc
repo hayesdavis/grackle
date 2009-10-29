@@ -133,9 +133,17 @@ You'll need the following gems to use all features of Grackle:
 - mime-types
 
 == INSTALL:
+The grackle gem is now hosted at http://gemcutter.org. If you've already setup gemcutter 
+in your sources, you can do the following:
+  sudo gem install grackle
 
-  sudo gem sources -a http://gems.github.com
-  sudo gem install hayesdavis-grackle
+If you haven't yet setup gemcutter in your sources, go to http://gemcutter.org and follow the instructions there.
+They will likely tell you to do the following:
+  sudo gem install gemcutter
+  sudo gem tumble
+
+Once you've done that you can do: 
+  sudo gem install grackle
 
 == LICENSE:
 

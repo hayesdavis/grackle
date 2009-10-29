@@ -9,7 +9,7 @@ Gem::Specification.new do |s|
   s.date = %q{2009-05-23}
   s.description = %q{Grackle is a lightweight library for the Twitter REST and Search API.}
   s.email = %q{hayes@appozite.com}
-  s.files = ["History.txt", "README.rdoc", "grackle.gemspec", "lib/grackle.rb", "lib/grackle/client.rb", "lib/grackle/handlers.rb", "lib/grackle/transport.rb", "lib/grackle/utils.rb", "test/test_grackle.rb", "test/test_helper.rb", "test/test_client.rb", "test/test_handlers.rb"]
+  s.files = ["CHANGELOG.rdoc", "README.rdoc", "grackle.gemspec", "lib/grackle.rb", "lib/grackle/client.rb", "lib/grackle/handlers.rb", "lib/grackle/transport.rb", "lib/grackle/utils.rb", "test/test_grackle.rb", "test/test_helper.rb", "test/test_client.rb", "test/test_handlers.rb"]
   s.has_rdoc = true
   s.homepage = %q{http://github.com/hayesdavis/grackle}
   s.rdoc_options = ["--inline-source", "--charset=UTF-8","--main=README.rdoc"]
