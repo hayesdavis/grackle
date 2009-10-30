@@ -79,6 +79,20 @@ You can force a format. To update the authenticated user's status using the XML 
 
 Or, with JSON
   client.statuses.update.json! :status=>'this status is from grackle' #POST to http://twitter.com/statuses/update.json
+  
+===Using Other HTTP Verbs
+To use HTTP verbs like DELETE or PUT, Grackle provides a slightly different syntax:
+  client.put{ hayesdavis.lists.my_list :name=>'New Name' } #HTTP PUT
+  client.delete{ direct_messages.destroy :id=>1 } #HTTP DELETE
+  
+You may specify any method chain you wish in the block. Note that if your method chain inside the block 
+ends in a ! or ?, that the HTTP verb for the block will still be used. This means that
+  client.delete{ direct_messages.destroy! :id=>1 } #Uses HTTP DELETE, not POST
+  client.direct_messages.destroy! :id=>1 #Uses HTTP POST
+
+If for some reason you don't like the preferred block syntax above, you may specify a 
+parameter to your method chain called :__method (note the double underscores) to specify the HTTP verb:
+  client.direct_messages.destroy! :id=>1, :__method=>:delete #HTTP DELETE
 
 ===Toggling APIs
 By default, the Grackle::Client sends all requests to the unversioned Twitter REST API. If you want to send requests to 
@@ -124,6 +138,12 @@ and returns an OpenStruct. If you specify a format that Grackle doesn't parse fo
 the raw response body. The Grackle::Client has a default_format you can specify. By default, the default_format is :json. 
 If you don't include a named format in your method chain as described above, but use a "?" or "!" then the 
 Grackle::Client.default_format is used.
+
+===Odds and Ends
+If you need to append something to the request path that isn't a valid ruby method, e.g.
+  /1user/lists.json #1user isn't a valid Ruby method
+you can use the Grackle::Client#_ method like so:
+  client._('1user').lists.json
 
 == REQUIREMENTS:
 

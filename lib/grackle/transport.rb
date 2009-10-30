@@ -19,12 +19,7 @@ module Grackle
     DEFAULT_REDIRECT_LIMIT = 5
     
     def req_class(method)
-      case method
-        when :get then Net::HTTP::Get
-        when :post then Net::HTTP::Post
-        when :put then Net::HTTP::Put
-        when :delete then Net::HTTP::Delete
-      end
+      Net::HTTP.const_get(method.to_s.capitalize)
     end
     
     # Options are one of

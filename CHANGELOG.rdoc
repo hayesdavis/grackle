@@ -1,3 +1,7 @@
+== 0.1.6 (2009-10-29)
+* Added support for HTTP methods beside GET and POST using block syntax
+* Added method for appending to the request path something that's not a valid ruby method
+
 == 0.1.5 (2009-10-28)
 Added support for the Twitter version 1 API as a API symbol :v1
 

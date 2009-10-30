@@ -45,13 +45,12 @@ module Grackle
   class Client
     
     class Request #:nodoc:
-      attr_accessor :client, :path, :method, :api, :ssl
+      attr_accessor :client, :path, :method, :api, :ssl, :params
       
       def initialize(client,api=:rest,ssl=true)
         self.client = client
         self.api = api
         self.ssl = ssl
-        self.method = :get
         self.path = ''
       end
       
@@ -74,9 +73,12 @@ module Grackle
       def scheme
         ssl ? 'https' :'http'
       end
+      
+      def params
+        @params ||= {}
+      end
     end
     
-    VALID_METHODS = [:get,:post,:put,:delete]
     VALID_FORMATS = [:json,:xml,:atom,:rss]
 
     # Contains the mapping of API name symbols to actual host (and path) 
@@ -133,26 +135,11 @@ module Grackle
       end
     end
                
-    def method_missing(name,*args)
-      #If method is a format name, execute using that format
-      if format_invocation?(name)
-        return call_with_format(name,*args)
+    def method_missing(name,*args,&block)
+      if block_given?
+        return request_with_http_method_block(name,&block)
       end
-      #If method ends in ! or ? use that to determine post or get
-      if name.to_s =~ /^(.*)(!|\?)$/
-        name = $1.to_sym
-        #! is a post, ? is a get
-        self.request.method = ($2 == '!' ? :post : :get)          
-        if format_invocation?(name)
-          return call_with_format(name,*args)
-        else
-          self.request << "/#{$1}"
-          return call_with_format(self.default_format,*args)
-        end
-      end
-      #Else add to the request path
-      self.request << "/#{name}"
-      self
+      append(name,*args)
     end
     
     # Used to toggle APIs for a particular request without setting the Client's default API
@@ -197,21 +184,53 @@ module Grackle
       auth[:password] = value
     end
     
+    def append(name,*args)
+      name = name.to_sym
+      #The args will be a hash, store them if they're specified
+      self.request.params = *args
+      #If method is a format name, execute using that format
+      if format_invocation?(name)
+        return call_with_format(name)
+      end
+      #If method ends in ! or ? use that to determine post or get
+      if name.to_s =~ /^(.*)(!|\?)$/
+        name = $1.to_sym
+        #! is a post, ? is a get - only set this if the method hasn't been set
+        self.request.method ||= ($2 == '!' ? :post : :get)          
+        if format_invocation?(name)
+          return call_with_format(name)
+        else
+          self.request << "/#{$1}"
+          return call_with_format(self.default_format)
+        end
+      end
+      #Else add to the request path
+      self.request << "/#{name}"
+      self
+    end
+    
+    alias_method :_, :append
+    
     protected
-      def call_with_format(format,params={})
-        id = params.delete(:id)
+      def call_with_format(format)
+        id = request.params.delete(:id)
         request << "/#{id}" if id
         request << ".#{format}"
-        res = send_request(params)
+        res = send_request
         process_response(format,res)
       ensure
         clear
       end
       
-      def send_request(params)
+      def send_request
         begin
+          http_method = (
+            request.params.delete(:__method) or request.method or :get
+          )
           transport.request(
-            request.method,request.url,:auth=>auth,:headers=>headers,:params=>params, :timeout => timeout
+            http_method, request.url,
+            :auth=>auth,:headers=>headers,
+            :params=>request.params,:timeout => timeout
           )
         rescue => e
           puts e
@@ -250,6 +269,20 @@ module Grackle
       
       def format_invocation?(name)
         self.request.path? && VALID_FORMATS.include?(name)
+      end
+      
+      def pending_request?
+        !@request.nil?
+      end
+
+      def request_with_http_method_block(method,&block)
+        request.method = method
+        response = instance_eval(&block)
+        if pending_request?
+          call_with_format(self.default_format)
+        else
+          response
+        end
       end
   end
 end

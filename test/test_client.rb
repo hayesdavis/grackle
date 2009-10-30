@@ -195,6 +195,45 @@ class TestClient < Test::Unit::TestCase
     client.statuses.public_timeline? :since=>time  
     assert_equal("/statuses/public_timeline.json?since=#{CGI::escape(time.httpdate)}",Net::HTTP.request.path)
   end
+
+  def test_simple_http_method_block
+    client = new_client(200,'[{"id":1,"text":"test 1"}]')
+    client.delete { direct_messages.destroy :id=>1, :other=>'value' }
+    assert_equal(:delete,client.transport.method, "delete block should use delete method")
+    assert_equal("/direct_messages/destroy/1.json",Net::HTTP.request.path)
+    assert_equal('value',client.transport.options[:params][:other])
+    
+    client = new_client(200,'{"id":54321,"screen_name":"test_user"}')
+    value = client.get { users.show.json? :screen_name=>'test_user' }
+    assert_equal(:get,client.transport.method)
+    assert_equal('http',client.transport.url.scheme)
+    assert(!Net::HTTP.last_instance.use_ssl?,'Net::HTTP instance should not be set to use SSL')
+    assert_equal('twitter.com',client.transport.url.host)
+    assert_equal('/users/show.json',client.transport.url.path)
+    assert_equal('test_user',client.transport.options[:params][:screen_name])
+    assert_equal('screen_name=test_user',Net::HTTP.request.path.split(/\?/)[1])
+    assert_equal(54321,value.id)    
+  end
+  
+  def test_http_method_blocks_choose_right_method
+    client = new_client(200,'[{"id":1,"text":"test 1"}]')
+    client.get { search :q=>'test' }
+    assert_equal(:get,client.transport.method, "Get block should choose get method")
+    client.delete { direct_messages.destroy :id=>1 }
+    assert_equal(:delete,client.transport.method, "Delete block should choose delete method")
+    client.post { direct_messages.destroy :id=>1 }
+    assert_equal(:post,client.transport.method, "Post block should choose post method")
+    client.put { direct_messages :id=>1 }
+    assert_equal(:put,client.transport.method, "Put block should choose put method")
+  end
+  
+  def test_http_method_selection_precedence
+    client = new_client(200,'[{"id":1,"text":"test 1"}]')
+    client.get { search! :q=>'test' }
+    assert_equal(:get,client.transport.method, "Get block should override method even if post bang is used")
+    client.delete { search? :q=>'test', :__method=>:post }
+    assert_equal(:post,client.transport.method, ":__method=>:post should override block setting and method suffix")
+  end
   
   private
     def with_http_responder(responder)
