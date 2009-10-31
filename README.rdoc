@@ -1,7 +1,7 @@
 =grackle
 by Hayes Davis
 - http://twitter.com/hayesdavis
-- hayes [at] appozite.com
+- hayes [at] appozite [dot] com
 - http://cheaptweet.com
 - http://www.appozite.com
 - http://hayesdavis.net
@@ -18,6 +18,13 @@ URLs used by Twitter, parameters required by those URLs or return values will no
 will potentially require, however, some modifications to your code that uses Grackle. 
 
 Grackle supports both OAuth and HTTP basic authentication.
+
+=== Support and Announcements
+The preferred forum for questions and discussions is the Google group at http://groups.google.com/group/gracklerb. 
+You can email me directly or @reply me on Twitter, but the group is better since the questions and responses 
+will be available to everyone. I'll also make announcements there. There are some examples on the wiki at 
+http://wiki.github.com/hayesdavis/grackle. If you prefer your information in 140 characters, follow 
+@gracklerb[http://twitter.com/gracklerb].
 
 ==USING GRACKLE
 
@@ -145,14 +152,14 @@ If you need to append something to the request path that isn't a valid ruby meth
 you can use the Grackle::Client#_ method like so:
   client._('1user').lists.json
 
-== REQUIREMENTS:
+== REQUIREMENTS
 
 You'll need the following gems to use all features of Grackle:
 - json
 - oauth 
 - mime-types
 
-== INSTALL:
+== INSTALL
 The grackle gem is now hosted at http://gemcutter.org. If you've already setup gemcutter 
 in your sources, you can do the following:
   sudo gem install grackle
@@ -165,7 +172,7 @@ They will likely tell you to do the following:
 Once you've done that you can do: 
   sudo gem install grackle
 
-== LICENSE:
+== LICENSE
 
 (The MIT License)
 
