@@ -185,7 +185,7 @@ module Grackle
     end
     
     def append(name,*args)
-      name = name.to_sym
+      name = name.to_s.to_sym
       #The args will be a hash, store them if they're specified
       self.request.params = args.first
       #If method is a format name, execute using that format

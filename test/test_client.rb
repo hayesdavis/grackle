@@ -247,6 +247,17 @@ class TestClient < Test::Unit::TestCase
     assert_equal(:post,client.transport.method, ":__method=>:post should override block setting and method suffix")
   end
   
+  def test_underscore_method_works_with_numbers
+    client = new_client(200,'{"id":12345,"screen_name":"test_user"}')
+    value = client.users.show._(12345).json?
+    assert_equal(:get,client.transport.method)
+    assert_equal('http',client.transport.url.scheme)
+    assert(!Net::HTTP.last_instance.use_ssl?,'Net::HTTP instance should not be set to use SSL')
+    assert_equal('twitter.com',client.transport.url.host)
+    assert_equal('/users/show/12345.json',client.transport.url.path)
+    assert_equal(12345,value.id)
+  end
+  
   private
     def with_http_responder(responder)
       Net::HTTP.responder = responder
