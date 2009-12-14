@@ -7,6 +7,10 @@ class TestClient < Test::Unit::TestCase
     class << self
       attr_accessor :response, :request, :last_instance, :responder
     end
+    
+    def connect
+      # This needs to be overridden so SSL requests can be mocked
+    end
    
     def request(req)
       self.class.last_instance = self
@@ -127,6 +131,14 @@ class TestClient < Test::Unit::TestCase
     client.statuses.public_timeline?
     assert_equal("https",client.transport.url.scheme)
     assert(Net::HTTP.last_instance.use_ssl?,'Net::HTTP instance should be set to use SSL')
+  end
+  
+  def test_ssl_with_ca_cert_file
+    MockTransport.ca_cert_file = "some_ca_certs.pem"
+    client = new_client(200,'[{"id":1,"text":"test 1"}]',:ssl=>true)
+    client.statuses.public_timeline?
+    assert_equal(OpenSSL::SSL::VERIFY_PEER,Net::HTTP.last_instance.verify_mode,'Net::HTTP instance should use OpenSSL::SSL::VERIFY_PEER mode')
+    assert_equal(MockTransport.ca_cert_file,Net::HTTP.last_instance.ca_file,'Net::HTTP instance should have cert file set')
   end
   
   def test_default_format

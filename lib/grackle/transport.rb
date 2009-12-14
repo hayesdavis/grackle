@@ -18,6 +18,10 @@ module Grackle
     CRLF = "\r\n"
     DEFAULT_REDIRECT_LIMIT = 5
     
+    class << self
+      attr_accessor :ca_cert_file
+    end
+    
     def req_class(method)
       Net::HTTP.const_get(method.to_s.capitalize)
     end
@@ -44,6 +48,9 @@ module Grackle
     def execute_request(method,url,options={})
       conn = Net::HTTP.new(url.host, url.port)
       conn.use_ssl = (url.scheme == 'https')
+      if conn.use_ssl?
+        configure_ssl(conn)
+      end
       conn.start do |http| 
         req = req_class(method).new(url.request_uri)
         http.read_timeout = options[:timeout]
@@ -166,31 +173,56 @@ module Grackle
         consumer.sign!(req,access_token)
       end
 
-      private
-        def oauth_site(conn,req)
-          site = "#{(conn.use_ssl? ? "https" : "http")}://#{conn.address}"
-          if (conn.use_ssl? && conn.port != 443) || (!conn.use_ssl? && conn.port != 80) 
-            site << ":#{conn.port}"
-          end
-          site
+      def oauth_site(conn,req)
+        site = "#{(conn.use_ssl? ? "https" : "http")}://#{conn.address}"
+        if (conn.use_ssl? && conn.port != 443) || (!conn.use_ssl? && conn.port != 80) 
+          site << ":#{conn.port}"
         end
-        
-        def dump_request(req)
-          puts "Sending Request"
-          puts"#{req.method} #{req.path}"
-          dump_headers(req)
-        end
+        site
+      end
       
-        def dump_response(res)
-          puts "Received Response"
-          dump_headers(res)
-          puts res.body
+      def dump_request(req)
+        puts "Sending Request"
+        puts"#{req.method} #{req.path}"
+        dump_headers(req)
+      end
+    
+      def dump_response(res)
+        puts "Received Response"
+        dump_headers(res)
+        puts res.body
+      end
+    
+      def dump_headers(msg)
+        msg.each_header do |key, value|
+          puts "\t#{key}=#{value}"
         end
-      
-        def dump_headers(msg)
-          msg.each_header do |key, value|
-            puts "\t#{key}=#{value}"
+      end
+
+      def configure_ssl(conn)
+        if self.class.ca_cert_file
+          conn.verify_mode = OpenSSL::SSL::VERIFY_PEER
+          conn.ca_file = self.class.ca_cert_file
+        else
+          # Turn off SSL verification which gets rid of warning in 1.8.x and 
+          # an error in 1.9.x.
+          conn.verify_mode = OpenSSL::SSL::VERIFY_NONE
+          unless @ssl_warning_shown
+            puts <<-EOS
+Warning: SSL Verification is not being performed. While your communication is 
+being encrypted, the identity of the other party is not being confirmed nor the 
+SSL certificate verified. It's recommended that you specify a file containing 
+root SSL certificates like so:
+ 
+Grackle::Transport.ca_cert_file = "path/to/cacerts.pem"
+  
+You can download this kind of file from the maintainers of cURL:
+http://curl.haxx.se/ca/cacert.pem
+  
+EOS
+            @ssl_warning_shown = true
           end
         end
+      end
   end
 end
