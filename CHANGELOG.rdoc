@@ -1,3 +1,9 @@
+== 0.1.7 (2009-12-13)
+* Fixed a bug in Ruby 1.9 where the client was incorrectly handling request method parameters
+* Fixed a bug in the _ method that wasn't correctly appending numeric path elements
+* Provided a way to specify SSL Certificate Authority certs for correct SSL validation
+* The only thing that doesn't work in 1.9 in this version is OAuth because that gem is not up to date
+
 == 0.1.6 (2009-10-29)
 * Added support for HTTP methods beside GET and POST using block syntax
 * Added method for appending to the request path something that's not a valid ruby method

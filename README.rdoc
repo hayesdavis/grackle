@@ -165,7 +165,8 @@ the exception of OAuth. The OAuth gem used by Grackle has not been updated fully
 to support 1.9. Please see this thread[http://groups.google.com/group/oauth-ruby/browse_thread/thread/d0851a907878cd22] 
 for more information.
 
-Once the OAuth gem has been updated, Grackle will work entirely on 1.9.
+Once the OAuth gem has been updated, Grackle will work fully on 1.9. If you 
+aren't using OAuth it should be fine for use on 1.9 as is.
 
 == INSTALL
 The grackle gem is now hosted at http://gemcutter.org. If you've already setup gemcutter 
