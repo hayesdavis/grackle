@@ -13,7 +13,7 @@ module Grackle
   
   class Transport
     
-    attr_accessor :debug
+    attr_accessor :debug, :proxy
   
     CRLF = "\r\n"
     DEFAULT_REDIRECT_LIMIT = 5
@@ -46,7 +46,7 @@ module Grackle
     end
     
     def execute_request(method,url,options={})
-      conn = Net::HTTP.new(url.host, url.port)
+      conn = http_class.new(url.host, url.port)
       conn.use_ssl = (url.scheme == 'https')
       if conn.use_ssl?
         configure_ssl(conn)
@@ -196,6 +196,18 @@ module Grackle
       def dump_headers(msg)
         msg.each_header do |key, value|
           puts "\t#{key}=#{value}"
+        end
+      end
+
+      def http_class
+        if proxy
+          if proxy.kind_of?(Proc)
+            proxy.call(self)
+          else
+            proxy
+          end
+        else
+          Net::HTTP
         end
       end
 

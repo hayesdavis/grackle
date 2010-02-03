@@ -21,7 +21,24 @@ class TestClient < Test::Unit::TestCase
         self.class.response
       end
     end
-  end  
+  end
+  
+  class MockProxy < Net::HTTP
+    class << self
+      attr_accessor :started
+      [:response,:request,:last_instance,:responder].each do |m|
+        class_eval "
+          def #{m}; Net::HTTP.#{m}; end
+          def #{m}=(val); Net::HTTP.#{m} = val; end
+        "
+      end
+    end
+    
+    def start
+      self.class.started = true
+      super
+    end
+  end
   
   #Mock responses that conform to HTTPResponse's interface
   class MockResponse < Net::HTTPResponse
@@ -256,6 +273,24 @@ class TestClient < Test::Unit::TestCase
     assert_equal('twitter.com',client.transport.url.host)
     assert_equal('/users/show/12345.json',client.transport.url.path)
     assert_equal(12345,value.id)
+  end
+  
+  def test_transport_proxy_setting_is_used
+    client = new_client(200,'{"id":12345,"screen_name":"test_user"}')
+    called = false
+    call_trans = nil
+    client.transport.proxy = Proc.new {|trans| call_trans = trans; called = true; MockProxy }
+    client.users.show._(12345).json?
+    assert(called,"Proxy proc should be called during request")
+    assert(MockProxy.started,"Proxy should have been called")
+    assert_equal(client.transport,call_trans,"Proxy should have been called with transport")
+    MockProxy.started = false
+    client.transport.proxy = MockProxy
+    client.users.show._(12345).json?
+    assert(MockProxy.started,"Proxy should have been called")
+    MockProxy.started = false
+    client.transport.proxy = nil
+    assert_equal(false,MockProxy.started,"Proxy should not have been called")
   end
   
   private
