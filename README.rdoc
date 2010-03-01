@@ -140,11 +140,18 @@ returned by Twitter. It's a good idea to wrap your API calls with rescue clauses
 If there is an unexpected connection error or Twitter returns data in the wrong format (which it can do), you'll still get a TwitterError.
 
 ===Formats
-Twitter allows you to request data in particular formats. Grackle automatically parses JSON and XML formatted responses 
-and returns an OpenStruct. The Grackle::Client has a default_format you can specify. By default, the default_format is :json. If you don't include a named format in your method chain as described above, but use a "?" or "!" then the 
+Twitter allows you to request data in particular formats. Grackle automatically 
+parses JSON and XML formatted responses and returns an OpenStruct. The 
+Grackle::Client has a default_format you can specify. By default, the 
+default_format is :json. If you don't include a named format in your method 
+chain as described above, but use a "?" or "!" then the 
 Grackle::Client.default_format is used.
 
-If you specify a format that Grackle doesn't parse for you, you'll receive a string containing the raw response body. If you want to receive the raw response body even for XML or JSON formatted responses, tell the Grackle client to use the +StringHandler+ handler. For example, the following code sets the Grackle client to return JSON instead of an OpenStruct:
+If you specify a format that Grackle doesn't parse for you, you'll receive a 
+string containing the raw response body. If you want to receive the raw 
+response body even for XML or JSON formatted responses, tell the Grackle client 
+to use the +StringHandler+ handler. For example, the following code sets the 
+Grackle client to return JSON instead of an OpenStruct:
 
   client = Grackle::Client.new(:handlers=>{:json=>Grackle::Handlers::StringHandler.new })
 
