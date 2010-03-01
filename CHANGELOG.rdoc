@@ -1,3 +1,7 @@
+== 0.1.9 (2010-2-28)
+* Added support for a boolean option called auto_append_ids that controls whether parameters named "id" are automatically appended to the URL or used as request parameters. It's true by default so there's no change to existing behavior unless you explicitly set it to false.
+* Updated the README with changes describing how to use custom handlers (thanks akahn!)
+
 == 0.1.8 (2010-2-2)
 * Added proxy support to Grackle::Transport via proxy attribute. Can specify a Proc that returns a Net::HTTP subclass or a Net::HTTP subclass directly. Typically this will be from Net::HTTP.Proxy.
 
