@@ -293,6 +293,25 @@ class TestClient < Test::Unit::TestCase
     assert_equal(false,MockProxy.started,"Proxy should not have been called")
   end
   
+  def test_auto_append_ids_is_honored
+    client = new_client(200,'{"id":12345,"screen_name":"test_user"}')
+    client.users.show.json? :id=>12345
+    assert_equal('/users/show/12345.json',client.transport.url.path,"Id should be appended by default")
+    client.auto_append_ids = false
+    client.users.show.json? :id=>12345
+    assert_equal('/users/show.json',client.transport.url.path,"Id should not be appended")
+    assert_equal(12345,client.transport.options[:params][:id], "Id should be treated as a parameter")
+    assert_equal("id=#{12345}",Net::HTTP.request.path.split(/\?/)[1],"id should be part of the query string")    
+  end
+  
+  def test_auto_append_ids_can_be_set_in_constructor
+    client = new_client(200,'{"id":12345,"screen_name":"test_user"}',:auto_append_ids=>false)
+    client.users.show.json? :id=>12345
+    assert_equal('/users/show.json',client.transport.url.path,"Id should not be appended")
+    assert_equal(12345,client.transport.options[:params][:id], "Id should be treated as a parameter")
+    assert_equal("id=#{12345}",Net::HTTP.request.path.split(/\?/)[1],"id should be part of the query string")    
+  end
+  
   private
     def with_http_responder(responder)
       Net::HTTP.responder = responder
