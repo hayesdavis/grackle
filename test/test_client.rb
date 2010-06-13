@@ -317,6 +317,19 @@ class TestClient < Test::Unit::TestCase
     assert_equal(:v1,client.api,":v1 should be default api")
   end
   
+  # Methods like Twitter's DELETE list membership expect that the user id will 
+  # be form encoded like a POST request in the body. Net::HTTP seems to think 
+  # that DELETEs can't have body parameters so we have to work around that.
+  def test_delete_can_send_body_parameters
+    client = new_client(200,'{"id":12345,"name":"Test List","members":0}')
+    client.delete { some_user.some_list.members? :user_id=>12345 }
+    assert_equal(:delete,client.transport.method,"Expected delete request")
+    assert_equal('http',client.transport.url.scheme,"Expected scheme to be http")
+    assert_equal('api.twitter.com',client.transport.url.host,"Expected request to be against twitter.com")
+    assert_equal('/1/some_user/some_list/members.json',client.transport.url.path)
+    assert_match(/user_id=12345/,Net::HTTP.request.body,"Parameters should be form encoded")
+  end
+  
   private
     def with_http_responder(responder)
       Net::HTTP.responder = responder

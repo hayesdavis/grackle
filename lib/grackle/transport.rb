@@ -126,7 +126,7 @@ module Grackle
       end
     
       def add_form_data(req,params)
-        if req.request_body_permitted? && params
+        if request_body_permitted?(req) && params
           req.set_form_data(params)
         end
       end
@@ -235,6 +235,14 @@ EOS
             @ssl_warning_shown = true
           end
         end
+      end
+
+      # Methods like Twitter's DELETE list membership expect that the user id 
+      # will be form encoded like a POST request in the body. Net::HTTP seems 
+      # to think that DELETEs can't have body parameters so we have to work 
+      # around that.
+      def request_body_permitted?(req)
+        req.request_body_permitted? || req.kind_of?(Net::HTTP::Delete)
       end
   end
 end
