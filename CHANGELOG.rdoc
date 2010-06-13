@@ -1,3 +1,7 @@
+== 0.1.10 (2010-6-12)
+* Changed :v1 (api.twitter.com/1) to be the default API instead of REST. :rest is now deprecated
+* Fixed issue with DELETE requests not being able to have form encoded body parameters. This was causing the list membership delete method to fail. As a side note, it appears that Twitter is actually violating the HTTP 1.1 spec on this one since RFC 2616 states that a DELETE "requests that the origin server delete the resource identified by the Request-URI" (note no mention of any "enclosed entity").
+
 == 0.1.9 (2010-2-28)
 * Added support for a boolean option called auto_append_ids that controls whether parameters named "id" are automatically appended to the URL or used as request parameters. It's true by default so there's no change to existing behavior unless you explicitly set it to false.
 * Updated the README with changes describing how to use custom handlers (thanks akahn!)

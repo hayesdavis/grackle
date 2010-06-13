@@ -102,26 +102,21 @@ parameter to your method chain called :__method (note the double underscores) to
   client.direct_messages.destroy! :id=>1, :__method=>:delete #HTTP DELETE
 
 ===Toggling APIs
-By default, the Grackle::Client sends all requests to the unversioned Twitter REST API. If you want to send requests to 
-the Twitter Search API, just set Grackle::Client.api to :search. To toggle back, set it to be :rest. All requests made 
+DEPRECATION NOTICE: The :rest API key (pointing to twitter.com) has been 
+deprecated in favor of the versioned API :v1 (pointing to api.twitter.com/1). 
+:v1 is now the default if you do not specify an API. Please do not use :rest 
+in your code.
+
+By default, the Grackle::Client sends all requests to the versioned Twitter REST API. If you want to send requests to 
+the Twitter Search API, just set Grackle::Client.api to :search. To toggle back, set it to be :v1. All requests made 
 after setting this attribute will go to that API.
 
 If you want to make a specific request to one API and not change the Client's overall api setting beyond that request, you can use the 
 bracket syntax like so:
   client[:search].trends.daily? :exclude=>'hashtags'
-  client[:rest].users.show? :id=>'hayesdavis'
+  client[:v1].users.show? :id=>'hayesdavis'
  
 Search and REST requests are all built using the same method chaining and termination conventions.
-
-Twitter is introducing API versioning. Grackle now supports the version 1 API using the :v1 API name. When using the :v1 
-API, resources that were previously separated between the search and REST APIs are available under one unified API. To 
-use the :v1 API, do the following:
-  client[:v1].search? :q=>'grackle'
-  client[:v1].users.show? :id=>'hayesdavis'
-  
-If you want to use the :v1 API for all requests, you may set Grackle::Client.api to :v1 or specify the :api option in the 
-Grackle::Client constructor like:
-  client = Grackle::Client.new(:api=>:v1)
 
 ===Parameter handling
 - All parameters are URL encoded as necessary.
