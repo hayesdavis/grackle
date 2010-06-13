@@ -1,4 +1,4 @@
-== 0.1.10 (2010-6-12)
+== 0.1.10 (2010-6-13)
 * Changed :v1 (api.twitter.com/1) to be the default API instead of REST. :rest is now deprecated
 * Fixed issue with DELETE requests not being able to have form encoded body parameters. This was causing the list membership delete method to fail. As a side note, it appears that Twitter is actually violating the HTTP 1.1 spec on this one since RFC 2616 states that a DELETE "requests that the origin server delete the resource identified by the Request-URI" (note no mention of any "enclosed entity").
 
