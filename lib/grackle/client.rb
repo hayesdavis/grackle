@@ -108,7 +108,7 @@ module Grackle
     # - :default_format - Symbol of format to use when no format is specified in an API call (e.g. :json, :xml)
     # - :headers        - Hash of string keys and values for headers to pass in the HTTP request to twitter
     # - :ssl            - true or false to turn SSL on or off. Default is off (i.e. http://)
-    # - :api            - one of :rest, :search or :v1. :rest is the default
+    # - :api            - one of :rest, :search or :v1. :v1 is the default and :rest is now deprecated
     # - :auth           - Hash of authentication type and credentials. Must have :type key with value one of :basic or :oauth
     #   - :type=>:basic  - Include :username and :password keys
     #   - :type=>:oauth  - Include :consumer_key, :consumer_secret, :token and :token_secret keys
@@ -119,7 +119,7 @@ module Grackle
       self.default_format = options[:default_format] || :json 
       self.headers = {"User-Agent"=>"Grackle/#{Grackle::VERSION}"}.merge!(options[:headers]||{})
       self.ssl = options[:ssl] == true
-      self.api = options[:api] || :rest
+      self.api = options[:api] || :v1
       self.api_hosts = TWITTER_API_HOSTS.clone
       self.timeout = options[:timeout] || 60
       self.auto_append_ids = options[:auto_append_ids] == false ? false : true

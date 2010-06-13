@@ -118,8 +118,8 @@ class TestClient < Test::Unit::TestCase
     assert_equal(:get,client.transport.method)
     assert_equal('http',client.transport.url.scheme)
     assert(!Net::HTTP.last_instance.use_ssl?,'Net::HTTP instance should not be set to use SSL')
-    assert_equal('twitter.com',client.transport.url.host)
-    assert_equal('/users/show.json',client.transport.url.path)
+    assert_equal('api.twitter.com',client.transport.url.host)
+    assert_equal('/1/users/show.json',client.transport.url.path)
     assert_equal('test_user',client.transport.options[:params][:screen_name])
     assert_equal('screen_name=test_user',Net::HTTP.request.path.split(/\?/)[1])
     assert_equal(12345,value.id)
@@ -207,7 +207,7 @@ class TestClient < Test::Unit::TestCase
   def test_clear
     client = new_client(200,'[{"id":1,"text":"test 1"}]')
     client.some.url.that.does.not.exist
-    assert_equal('/some/url/that/does/not/exist',client.send(:request).path,"An unexecuted path should be build up")
+    assert_equal('/some/url/that/does/not/exist',client.send(:request).path,"An unexecuted path should be built up")
     client.clear
     assert_equal('',client.send(:request).path,"The path shoudl be cleared")
   end
@@ -222,14 +222,14 @@ class TestClient < Test::Unit::TestCase
     client = new_client(200,'[{"id":1,"text":"test 1"}]')
     time = Time.now-60*60
     client.statuses.public_timeline? :since=>time  
-    assert_equal("/statuses/public_timeline.json?since=#{CGI::escape(time.httpdate)}",Net::HTTP.request.path)
+    assert_equal("/1/statuses/public_timeline.json?since=#{CGI::escape(time.httpdate)}",Net::HTTP.request.path)
   end
 
   def test_simple_http_method_block
     client = new_client(200,'[{"id":1,"text":"test 1"}]')
     client.delete { direct_messages.destroy :id=>1, :other=>'value' }
     assert_equal(:delete,client.transport.method, "delete block should use delete method")
-    assert_equal("/direct_messages/destroy/1.json",Net::HTTP.request.path)
+    assert_equal("/1/direct_messages/destroy/1.json",Net::HTTP.request.path)
     assert_equal('value',client.transport.options[:params][:other])
     
     client = new_client(200,'{"id":54321,"screen_name":"test_user"}')
@@ -237,8 +237,8 @@ class TestClient < Test::Unit::TestCase
     assert_equal(:get,client.transport.method)
     assert_equal('http',client.transport.url.scheme)
     assert(!Net::HTTP.last_instance.use_ssl?,'Net::HTTP instance should not be set to use SSL')
-    assert_equal('twitter.com',client.transport.url.host)
-    assert_equal('/users/show.json',client.transport.url.path)
+    assert_equal('api.twitter.com',client.transport.url.host)
+    assert_equal('/1/users/show.json',client.transport.url.path)
     assert_equal('test_user',client.transport.options[:params][:screen_name])
     assert_equal('screen_name=test_user',Net::HTTP.request.path.split(/\?/)[1])
     assert_equal(54321,value.id)    
@@ -270,8 +270,8 @@ class TestClient < Test::Unit::TestCase
     assert_equal(:get,client.transport.method)
     assert_equal('http',client.transport.url.scheme)
     assert(!Net::HTTP.last_instance.use_ssl?,'Net::HTTP instance should not be set to use SSL')
-    assert_equal('twitter.com',client.transport.url.host)
-    assert_equal('/users/show/12345.json',client.transport.url.path)
+    assert_equal('api.twitter.com',client.transport.url.host)
+    assert_equal('/1/users/show/12345.json',client.transport.url.path)
     assert_equal(12345,value.id)
   end
   
@@ -296,10 +296,10 @@ class TestClient < Test::Unit::TestCase
   def test_auto_append_ids_is_honored
     client = new_client(200,'{"id":12345,"screen_name":"test_user"}')
     client.users.show.json? :id=>12345
-    assert_equal('/users/show/12345.json',client.transport.url.path,"Id should be appended by default")
+    assert_equal('/1/users/show/12345.json',client.transport.url.path,"Id should be appended by default")
     client.auto_append_ids = false
     client.users.show.json? :id=>12345
-    assert_equal('/users/show.json',client.transport.url.path,"Id should not be appended")
+    assert_equal('/1/users/show.json',client.transport.url.path,"Id should not be appended")
     assert_equal(12345,client.transport.options[:params][:id], "Id should be treated as a parameter")
     assert_equal("id=#{12345}",Net::HTTP.request.path.split(/\?/)[1],"id should be part of the query string")    
   end
@@ -307,9 +307,14 @@ class TestClient < Test::Unit::TestCase
   def test_auto_append_ids_can_be_set_in_constructor
     client = new_client(200,'{"id":12345,"screen_name":"test_user"}',:auto_append_ids=>false)
     client.users.show.json? :id=>12345
-    assert_equal('/users/show.json',client.transport.url.path,"Id should not be appended")
+    assert_equal('/1/users/show.json',client.transport.url.path,"Id should not be appended")
     assert_equal(12345,client.transport.options[:params][:id], "Id should be treated as a parameter")
     assert_equal("id=#{12345}",Net::HTTP.request.path.split(/\?/)[1],"id should be part of the query string")    
+  end
+  
+  def test_default_api
+    client = Grackle::Client.new
+    assert_equal(:v1,client.api,":v1 should be default api")
   end
   
   private
@@ -331,8 +336,8 @@ class TestClient < Test::Unit::TestCase
       value = client.statuses.update! :status=>'test status'
       assert_equal(:post,client.transport.method,"Expected post request")
       assert_equal('http',client.transport.url.scheme,"Expected scheme to be http")
-      assert_equal('twitter.com',client.transport.url.host,"Expected request to be against twitter.com")
-      assert_equal('/statuses/update.json',client.transport.url.path)
+      assert_equal('api.twitter.com',client.transport.url.host,"Expected request to be against twitter.com")
+      assert_equal('/1/statuses/update.json',client.transport.url.path)
       assert_match(/status=test%20status/,Net::HTTP.request.body,"Parameters should be form encoded")
       assert_equal(12345,value.id)
       yield(client) if block_given?
