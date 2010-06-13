@@ -174,7 +174,7 @@ class TestClient < Test::Unit::TestCase
     assert_equal('search.twitter.com',client.transport.url.host)
 
     client[:rest].users.show.some_user?
-    assert_equal('twitter.com',client.transport.url.host)
+    assert_equal('api.twitter.com',client.transport.url.host)
 
     client.api = :search
     client.trends?
