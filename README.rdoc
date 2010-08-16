@@ -33,6 +33,7 @@ Before you do anything else, you'll need to
 
 ===Creating a Grackle::Client
 ====Using Basic Auth
+DEPRECATION NOTICE: As of August 16, 2010, Twitter is deprecating basic authentication in favor of OAuth. Basic auth will not work after August 31, 2010. Please refer to the next section on OAuth authentication.
   client = Grackle::Client.new(:auth=>{:type=>:basic,:username=>'your_user',:password=>'yourpass'})
 
 ====Using OAuth
