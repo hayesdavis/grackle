@@ -43,6 +43,10 @@ DEPRECATION NOTICE: As of August 16, 2010, Twitter is deprecating basic authenti
     :token=>'ACCESSTOKENACQUIREDONUSERSBEHALF', :token_secret=>'SUPERSECRETACCESSTOKENSECRET'
   })
   
+See the wiki[http://wiki.github.com/hayesdavis/grackle/acquiring-the-acces-token-and-secret] 
+for more information on acquiring the keys, tokens and secrets needed to 
+successfully authenticate with OAuth.
+
 ====Using No Auth
   client = Grackle::Client.new
 
