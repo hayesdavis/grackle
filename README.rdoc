@@ -17,8 +17,6 @@ assumptions about the presence or absence of any particular attributes. Taking t
 URLs used by Twitter, parameters required by those URLs or return values will not require a new release. It 
 will potentially require, however, some modifications to your code that uses Grackle. 
 
-Grackle supports both OAuth and HTTP basic authentication.
-
 === Support and Announcements
 The preferred forum for questions and discussions is the Google group at http://groups.google.com/group/gracklerb. 
 You can email me directly or @reply me on Twitter, but the group is better since the questions and responses 
@@ -32,10 +30,6 @@ Before you do anything else, you'll need to
   require 'grackle'
 
 ===Creating a Grackle::Client
-====Using Basic Auth
-DEPRECATION NOTICE: As of August 16, 2010, Twitter is deprecating basic authentication in favor of OAuth. Basic auth will not work after August 31, 2010. Please refer to the next section on OAuth authentication.
-  client = Grackle::Client.new(:auth=>{:type=>:basic,:username=>'your_user',:password=>'yourpass'})
-
 ====Using OAuth
   client = Grackle::Client.new(:auth=>{
     :type=>:oauth,
@@ -49,6 +43,10 @@ successfully authenticate with OAuth.
 
 ====Using No Auth
   client = Grackle::Client.new
+
+====Using Basic Auth
+DEPRECATION NOTICE: As of August 31st, 2010, Twitter has deprecated basic authentication in favor of OAuth. Please refer to the next section on OAuth authentication.
+  client = Grackle::Client.new(:auth=>{:type=>:basic,:username=>'your_user',:password=>'yourpass'})
 
 See Grackle::Client for more information about valid arguments to the constructor. It's quite configurable. Among other things, 
 you can turn on ssl and specify custom headers. The calls below are pretty much as simple as it gets.
