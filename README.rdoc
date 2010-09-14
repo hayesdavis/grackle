@@ -44,8 +44,8 @@ successfully authenticate with OAuth.
 ====Using No Auth
   client = Grackle::Client.new
 
-====Using Basic Auth
-DEPRECATION NOTICE: As of August 31st, 2010, Twitter has deprecated basic authentication in favor of OAuth. Please refer to the next section on OAuth authentication.
+====Using Basic Auth (DEPRECATED)
+As of August 31st, 2010, Twitter has deprecated basic authentication in favor of OAuth. Please refer to the next section on OAuth authentication.
   client = Grackle::Client.new(:auth=>{:type=>:basic,:username=>'your_user',:password=>'yourpass'})
 
 See Grackle::Client for more information about valid arguments to the constructor. It's quite configurable. Among other things, 
