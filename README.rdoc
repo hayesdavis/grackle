@@ -21,7 +21,7 @@ will potentially require, however, some modifications to your code that uses Gra
 The preferred forum for questions and discussions is the Google group at http://groups.google.com/group/gracklerb. 
 You can email me directly or @reply me on Twitter, but the group is better since the questions and responses 
 will be available to everyone. I'll also make announcements there. There are some examples on the wiki at 
-http://github.com/hayesdavis/grackle/wiki. If you prefer your information in 140 characters, follow 
+http://wiki.github.com/hayesdavis/grackle. If you prefer your information in 140 characters, follow 
 @gracklerb[http://twitter.com/gracklerb].
 
 ==USING GRACKLE
@@ -37,7 +37,7 @@ Before you do anything else, you'll need to
     :token=>'ACCESSTOKENACQUIREDONUSERSBEHALF', :token_secret=>'SUPERSECRETACCESSTOKENSECRET'
   })
   
-OAuth can be a bit complicated. See the wiki[http://github.com/hayesdavis/grackle/wiki/grackle-and-oauth] 
+OAuth can be a bit complicated. See the wiki[http://wiki.github.com/hayesdavis/grackle/grackle-and-oauth] 
 for more information on acquiring the keys, tokens and secrets needed to 
 successfully authenticate with OAuth.
 
