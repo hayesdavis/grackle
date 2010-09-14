@@ -23,7 +23,7 @@ Grackle supports both OAuth and HTTP basic authentication.
 The preferred forum for questions and discussions is the Google group at http://groups.google.com/group/gracklerb. 
 You can email me directly or @reply me on Twitter, but the group is better since the questions and responses 
 will be available to everyone. I'll also make announcements there. There are some examples on the wiki at 
-http://wiki.github.com/hayesdavis/grackle. If you prefer your information in 140 characters, follow 
+http://github.com/hayesdavis/grackle/wiki. If you prefer your information in 140 characters, follow 
 @gracklerb[http://twitter.com/gracklerb].
 
 ==USING GRACKLE
@@ -43,7 +43,7 @@ DEPRECATION NOTICE: As of August 16, 2010, Twitter is deprecating basic authenti
     :token=>'ACCESSTOKENACQUIREDONUSERSBEHALF', :token_secret=>'SUPERSECRETACCESSTOKENSECRET'
   })
   
-See the wiki[http://wiki.github.com/hayesdavis/grackle/acquiring-the-acces-token-and-secret] 
+OAuth can be a bit complicated. See the wiki[http://github.com/hayesdavis/grackle/wiki/grackle-and-oauth] 
 for more information on acquiring the keys, tokens and secrets needed to 
 successfully authenticate with OAuth.
 
