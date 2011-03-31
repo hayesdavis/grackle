@@ -33,11 +33,11 @@ module Grackle
     # - :auth - a hash of authentication parameters for either basic or oauth
     # - :timeout - timeout for the http request in seconds
     def request(method, string_url, options={})
+      encoded_url = URI.encode(string_url)
       params = stringify_params(options[:params])
       if method == :get && params
-        string_url << query_string(params)
+        encoded_url << query_string(params)
       end
-      encoded_url = URI.encode(string_url)
       url = URI.parse(encoded_url)
       begin
         execute_request(method,url,options)
