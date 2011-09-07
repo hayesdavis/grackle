@@ -66,7 +66,7 @@ format (usually JSON, but see Formats section below):
   client.users.show? :screen_name=>'some_user' #http://twitter.com/users/show.json?screen_name=some_user
 
 You can force XML format by doing:
-  client.users.show.xml? :screen_name=>'some_user' #http://twitter.com/users/show.xml?scren_name=some_user
+  client.users.show.xml? :screen_name=>'some_user' #http://twitter.com/users/show.xml?screen_name=some_user
   
 You can force JSON:
   client.users.show.json? :screen_name=>'some_user' #http://twitter.com/users/show.json?screen_name=some_user
@@ -75,7 +75,7 @@ Or, since Twitter also allows certain ids/screen_names to be part of their URLs,
   client.users.show.some_user? #http://twitter.com/users/show/some_user.json
 
 If you use an explicit format, you can leave off the "?" like so:
-  client.users.show.xml :screen_name=>'some_user' #http://twitter.com/users/show.xml?scren_name=some_user
+  client.users.show.xml :screen_name=>'some_user' #http://twitter.com/users/show.xml?screen_name=some_user
 
 ===POSTing data
 To use Twitter API methods that require an HTTP POST, you need to end your method chain with a bang (!)
