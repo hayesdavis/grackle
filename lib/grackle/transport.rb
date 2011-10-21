@@ -1,8 +1,8 @@
 module Grackle
-  
+
   class Response #:nodoc:
     attr_accessor :method, :request_uri, :status, :body
-    
+
     def initialize(method,request_uri,status,body)
       self.method = method
       self.request_uri = request_uri
@@ -10,22 +10,22 @@ module Grackle
       self.body = body
     end
   end
-  
+
   class Transport
-    
+
     attr_accessor :debug, :proxy
-  
+
     CRLF = "\r\n"
     DEFAULT_REDIRECT_LIMIT = 5
-    
+
     class << self
       attr_accessor :ca_cert_file
     end
-    
+
     def req_class(method)
       Net::HTTP.const_get(method.to_s.capitalize)
     end
-    
+
     # Options are one of
     # - :params - a hash of parameters to be sent with the request. If a File is a parameter value, \
     #             a multipart request will be sent. If a Time is included, .httpdate will be called on it.
@@ -44,14 +44,14 @@ module Grackle
         raise "Timeout while #{method}ing #{url.to_s}"
       end
     end
-    
+
     def execute_request(method,url,options={})
       conn = http_class.new(url.host, url.port)
       conn.use_ssl = (url.scheme == 'https')
       if conn.use_ssl?
         configure_ssl(conn)
       end
-      conn.start do |http| 
+      conn.start do |http|
         req = req_class(method).new(url.request_uri)
         http.read_timeout = options[:timeout]
         add_headers(req,options[:headers])
@@ -73,7 +73,7 @@ module Grackle
         redirect_limit = options[:redirect_limit] || DEFAULT_REDIRECT_LIMIT
         if res.code.to_s =~ /^3\d\d$/ && redirect_limit > 0 && res['location']
           execute_request(method,URI.parse(res['location']),options.merge(:redirect_limit=>redirect_limit-1))
-        else 
+        else
           Response.new(method,url.to_s,res.code.to_i,res.body)
         end
       end
@@ -88,8 +88,8 @@ module Grackle
         query = "?#{query}"
       end
       query
-    end      
-  
+    end
+
     private
       def stringify_params(params)
         return nil unless params
@@ -102,35 +102,35 @@ module Grackle
           h
         end
       end
-      
+
       def file_param?(params)
         return false unless params
         params.any? {|key,value| value.respond_to? :read }
       end
-      
+
       def url_encode(value)
         require 'cgi' unless defined?(CGI) && defined?(CGI::escape)
         CGI.escape(value.to_s)
       end
-      
+
       def url_encode_param(key,value)
         "#{url_encode(key)}=#{url_encode(value)}"
       end
-      
+
       def add_headers(req,headers)
         if headers
           headers.each do |header, value|
             req[header] = value
           end
-        end        
+        end
       end
-    
+
       def add_form_data(req,params)
         if request_body_permitted?(req) && params
           req.set_form_data(params)
         end
       end
-    
+
       def add_multipart_data(req,params)
         boundary = Time.now.to_i.to_s(16)
         req["Content-Type"] = "multipart/form-data; boundary=#{boundary}"
@@ -152,7 +152,7 @@ module Grackle
         req.body = body
         req["Content-Length"] = req.body.size
       end
-    
+
       def add_basic_auth(req,auth)
         username = auth[:username]
         password = auth[:password]
@@ -160,7 +160,7 @@ module Grackle
           req.basic_auth(username,password)
         end
       end
-      
+
       def add_oauth(conn,req,auth)
         options = auth.reject do |key,value|
           [:type,:consumer_key,:consumer_secret,:token,:token_secret].include?(key)
@@ -175,24 +175,24 @@ module Grackle
 
       def oauth_site(conn,req)
         site = "#{(conn.use_ssl? ? "https" : "http")}://#{conn.address}"
-        if (conn.use_ssl? && conn.port != 443) || (!conn.use_ssl? && conn.port != 80) 
+        if (conn.use_ssl? && conn.port != 443) || (!conn.use_ssl? && conn.port != 80)
           site << ":#{conn.port}"
         end
         site
       end
-      
+
       def dump_request(req)
         puts "Sending Request"
         puts"#{req.method} #{req.path}"
         dump_headers(req)
       end
-    
+
       def dump_response(res)
         puts "Received Response"
         dump_headers(res)
         puts res.body
       end
-    
+
       def dump_headers(msg)
         msg.each_header do |key, value|
           puts "\t#{key}=#{value}"
@@ -216,30 +216,30 @@ module Grackle
           conn.verify_mode = OpenSSL::SSL::VERIFY_PEER
           conn.ca_file = self.class.ca_cert_file
         else
-          # Turn off SSL verification which gets rid of warning in 1.8.x and 
+          # Turn off SSL verification which gets rid of warning in 1.8.x and
           # an error in 1.9.x.
           conn.verify_mode = OpenSSL::SSL::VERIFY_NONE
           unless @ssl_warning_shown
             puts <<-EOS
-Warning: SSL Verification is not being performed. While your communication is 
-being encrypted, the identity of the other party is not being confirmed nor the 
-SSL certificate verified. It's recommended that you specify a file containing 
+Warning: SSL Verification is not being performed. While your communication is
+being encrypted, the identity of the other party is not being confirmed nor the
+SSL certificate verified. It's recommended that you specify a file containing
 root SSL certificates like so:
- 
+
 Grackle::Transport.ca_cert_file = "path/to/cacerts.pem"
-  
+
 You can download this kind of file from the maintainers of cURL:
 http://curl.haxx.se/ca/cacert.pem
-  
+
 EOS
             @ssl_warning_shown = true
           end
         end
       end
 
-      # Methods like Twitter's DELETE list membership expect that the user id 
-      # will be form encoded like a POST request in the body. Net::HTTP seems 
-      # to think that DELETEs can't have body parameters so we have to work 
+      # Methods like Twitter's DELETE list membership expect that the user id
+      # will be form encoded like a POST request in the body. Net::HTTP seems
+      # to think that DELETEs can't have body parameters so we have to work
       # around that.
       def request_body_permitted?(req)
         req.request_body_permitted? || req.kind_of?(Net::HTTP::Delete)
