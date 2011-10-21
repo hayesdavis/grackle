@@ -1,28 +1,28 @@
 require File.dirname(__FILE__) + '/test_helper'
 
 class TestClient < Test::Unit::TestCase
-  
+
   #Used for mocking HTTP requests
   class Net::HTTP
     class << self
       attr_accessor :response, :request, :last_instance, :responder
     end
-    
+
     def connect
       # This needs to be overridden so SSL requests can be mocked
     end
-   
+
     def request(req)
       self.class.last_instance = self
       if self.class.responder
-        self.class.responder.call(self,req)        
+        self.class.responder.call(self,req)
       else
         self.class.request = req
         self.class.response
       end
     end
   end
-  
+
   class MockProxy < Net::HTTP
     class << self
       attr_accessor :started
@@ -33,13 +33,13 @@ class TestClient < Test::Unit::TestCase
         "
       end
     end
-    
+
     def start
       self.class.started = true
       super
     end
   end
-  
+
   #Mock responses that conform to HTTPResponse's interface
   class MockResponse < Net::HTTPResponse
     #include Net::HTTPHeader
@@ -53,15 +53,15 @@ class TestClient < Test::Unit::TestCase
       end
     end
   end
-  
+
   #Transport that collects info on requests and responses for testing purposes
   class MockTransport < Grackle::Transport
     attr_accessor :status, :body, :method, :url, :options, :timeout
-    
+
     def initialize(status,body,headers={})
       Net::HTTP.response = MockResponse.new(status,body,headers)
     end
-    
+
     def request(method, string_url, options)
       self.method = method
       self.url = URI.parse(string_url)
@@ -69,19 +69,19 @@ class TestClient < Test::Unit::TestCase
       super(method,string_url,options)
     end
   end
-  
+
   class TestHandler
     attr_accessor :decode_value
-    
+
     def initialize(value)
       self.decode_value = value
     end
-    
+
     def decode_response(body)
-      decode_value  
+      decode_value
     end
   end
-  
+
   def test_redirects
     redirects = 2 #Check that we can follow 2 redirects before getting to original request
     req_count = 0
@@ -89,7 +89,7 @@ class TestClient < Test::Unit::TestCase
       req_count += 1
       #Store the original request
       if req_count == 1
-        inst.class.request = req 
+        inst.class.request = req
       else
         assert_equal("/somewhere_else#{req_count-1}.json",req.path)
       end
@@ -104,14 +104,14 @@ class TestClient < Test::Unit::TestCase
     end
     assert_equal(redirects+1,req_count)
   end
-  
+
   def test_timeouts
     client = new_client(200,'{"id":12345,"screen_name":"test_user"}')
     assert_equal(60, client.timeout)
     client.timeout = 30
     assert_equal(30, client.timeout)
   end
-  
+
   def test_simple_get_request
     client = new_client(200,'{"id":12345,"screen_name":"test_user"}')
     value = client.users.show.json? :screen_name=>'test_user'
@@ -124,14 +124,14 @@ class TestClient < Test::Unit::TestCase
     assert_equal('screen_name=test_user',Net::HTTP.request.path.split(/\?/)[1])
     assert_equal(12345,value.id)
   end
-  
+
   def test_simple_post_request_with_basic_auth
     client = Grackle::Client.new(:auth=>{:type=>:basic,:username=>'fake_user',:password=>'fake_pass'})
     test_simple_post(client) do
       assert_match(/Basic/i,Net::HTTP.request['Authorization'],"Request should include Authorization header for basic auth")
     end
   end
-  
+
   def test_simple_post_request_with_oauth
     client = Grackle::Client.new(:auth=>{:type=>:oauth,:consumer_key=>'12345',:consumer_secret=>'abc',:token=>'wxyz',:token_secret=>'98765'})
     test_simple_post(client) do
@@ -142,14 +142,14 @@ class TestClient < Test::Unit::TestCase
       assert_match(/oauth_signature_method="HMAC-SHA1"/,auth,"Auth header should include HMAC-SHA1 signature method as that's what Twitter supports")
     end
   end
-  
+
   def test_ssl
     client = new_client(200,'[{"id":1,"text":"test 1"}]',:ssl=>true)
     client.statuses.public_timeline?
     assert_equal("https",client.transport.url.scheme)
     assert(Net::HTTP.last_instance.use_ssl?,'Net::HTTP instance should be set to use SSL')
   end
-  
+
   def test_ssl_with_ca_cert_file
     MockTransport.ca_cert_file = "some_ca_certs.pem"
     client = new_client(200,'[{"id":1,"text":"test 1"}]',:ssl=>true)
@@ -157,17 +157,17 @@ class TestClient < Test::Unit::TestCase
     assert_equal(OpenSSL::SSL::VERIFY_PEER,Net::HTTP.last_instance.verify_mode,'Net::HTTP instance should use OpenSSL::SSL::VERIFY_PEER mode')
     assert_equal(MockTransport.ca_cert_file,Net::HTTP.last_instance.ca_file,'Net::HTTP instance should have cert file set')
   end
-  
+
   def test_default_format
     client = new_client(200,'[{"id":1,"text":"test 1"}]',:default_format=>:json)
     client.statuses.public_timeline?
     assert_match(/\.json$/,client.transport.url.path)
-    
+
     client = new_client(200,'<statuses type="array"><status><id>1</id><text>test 1</text></status></statuses>',:default_format=>:xml)
     client.statuses.public_timeline?
     assert_match(/\.xml$/,client.transport.url.path)
   end
-  
+
   def test_api
     client = new_client(200,'[{"id":1,"text":"test 1"}]',:api=>:search)
     client.search? :q=>'test'
@@ -179,7 +179,7 @@ class TestClient < Test::Unit::TestCase
     client.api = :search
     client.trends?
     assert_equal('search.twitter.com',client.transport.url.host)
-    
+
     client.api = :v1
     client.search? :q=>'test'
     assert_equal('api.twitter.com',client.transport.url.host)
@@ -190,20 +190,20 @@ class TestClient < Test::Unit::TestCase
     assert_equal('api.twitter.com',client.transport.url.host)
     assert_match(%r{^/1/users/show/some_user},client.transport.url.path)
   end
-  
+
   def test_headers
     client = new_client(200,'[{"id":1,"text":"test 1"}]',:headers=>{'User-Agent'=>'TestAgent/1.0','X-Test-Header'=>'Header Value'})
     client.statuses.public_timeline?
     assert_equal('TestAgent/1.0',Net::HTTP.request['User-Agent'],"Custom User-Agent header should have been set")
     assert_equal('Header Value',Net::HTTP.request['X-Test-Header'],"Custom X-Test-Header header should have been set")
   end
-  
+
   def test_custom_handlers
     client = new_client(200,'[{"id":1,"text":"test 1"}]',:handlers=>{:json=>TestHandler.new(42)})
     value = client.statuses.public_timeline.json?
     assert_equal(42,value)
   end
-  
+
   def test_clear
     client = new_client(200,'[{"id":1,"text":"test 1"}]')
     client.some.url.that.does.not.exist
@@ -211,17 +211,17 @@ class TestClient < Test::Unit::TestCase
     client.clear
     assert_equal('',client.send(:request).path,"The path shoudl be cleared")
   end
-  
+
   def test_file_param_triggers_multipart_encoding
     client = new_client(200,'[{"id":1,"text":"test 1"}]')
-    client.account.update_profile_image! :image=>File.new(__FILE__)    
+    client.account.update_profile_image! :image=>File.new(__FILE__)
     assert_match(/multipart\/form-data/,Net::HTTP.request['Content-Type'])
   end
-  
+
   def test_time_param_is_http_encoded_and_escaped
     client = new_client(200,'[{"id":1,"text":"test 1"}]')
     time = Time.now-60*60
-    client.statuses.public_timeline? :since=>time  
+    client.statuses.public_timeline? :since=>time
     assert_equal("/1/statuses/public_timeline.json?since=#{CGI::escape(time.httpdate)}",Net::HTTP.request.path)
   end
 
@@ -231,7 +231,7 @@ class TestClient < Test::Unit::TestCase
     assert_equal(:delete,client.transport.method, "delete block should use delete method")
     assert_equal("/1/direct_messages/destroy/1.json",Net::HTTP.request.path)
     assert_equal('value',client.transport.options[:params][:other])
-    
+
     client = new_client(200,'{"id":54321,"screen_name":"test_user"}')
     value = client.get { users.show.json? :screen_name=>'test_user' }
     assert_equal(:get,client.transport.method)
@@ -241,9 +241,9 @@ class TestClient < Test::Unit::TestCase
     assert_equal('/1/users/show.json',client.transport.url.path)
     assert_equal('test_user',client.transport.options[:params][:screen_name])
     assert_equal('screen_name=test_user',Net::HTTP.request.path.split(/\?/)[1])
-    assert_equal(54321,value.id)    
+    assert_equal(54321,value.id)
   end
-  
+
   def test_http_method_blocks_choose_right_method
     client = new_client(200,'[{"id":1,"text":"test 1"}]')
     client.get { search :q=>'test' }
@@ -255,7 +255,7 @@ class TestClient < Test::Unit::TestCase
     client.put { direct_messages :id=>1 }
     assert_equal(:put,client.transport.method, "Put block should choose put method")
   end
-  
+
   def test_http_method_selection_precedence
     client = new_client(200,'[{"id":1,"text":"test 1"}]')
     client.get { search! :q=>'test' }
@@ -263,7 +263,7 @@ class TestClient < Test::Unit::TestCase
     client.delete { search? :q=>'test', :__method=>:post }
     assert_equal(:post,client.transport.method, ":__method=>:post should override block setting and method suffix")
   end
-  
+
   def test_underscore_method_works_with_numbers
     client = new_client(200,'{"id":12345,"screen_name":"test_user"}')
     value = client.users.show._(12345).json?
@@ -274,7 +274,7 @@ class TestClient < Test::Unit::TestCase
     assert_equal('/1/users/show/12345.json',client.transport.url.path)
     assert_equal(12345,value.id)
   end
-  
+
   def test_transport_proxy_setting_is_used
     client = new_client(200,'{"id":12345,"screen_name":"test_user"}')
     called = false
@@ -292,7 +292,7 @@ class TestClient < Test::Unit::TestCase
     client.transport.proxy = nil
     assert_equal(false,MockProxy.started,"Proxy should not have been called")
   end
-  
+
   def test_auto_append_ids_is_honored
     client = new_client(200,'{"id":12345,"screen_name":"test_user"}')
     client.users.show.json? :id=>12345
@@ -301,24 +301,24 @@ class TestClient < Test::Unit::TestCase
     client.users.show.json? :id=>12345
     assert_equal('/1/users/show.json',client.transport.url.path,"Id should not be appended")
     assert_equal(12345,client.transport.options[:params][:id], "Id should be treated as a parameter")
-    assert_equal("id=#{12345}",Net::HTTP.request.path.split(/\?/)[1],"id should be part of the query string")    
+    assert_equal("id=#{12345}",Net::HTTP.request.path.split(/\?/)[1],"id should be part of the query string")
   end
-  
+
   def test_auto_append_ids_can_be_set_in_constructor
     client = new_client(200,'{"id":12345,"screen_name":"test_user"}',:auto_append_ids=>false)
     client.users.show.json? :id=>12345
     assert_equal('/1/users/show.json',client.transport.url.path,"Id should not be appended")
     assert_equal(12345,client.transport.options[:params][:id], "Id should be treated as a parameter")
-    assert_equal("id=#{12345}",Net::HTTP.request.path.split(/\?/)[1],"id should be part of the query string")    
+    assert_equal("id=#{12345}",Net::HTTP.request.path.split(/\?/)[1],"id should be part of the query string")
   end
-  
+
   def test_default_api
     client = Grackle::Client.new
     assert_equal(:v1,client.api,":v1 should be default api")
   end
-  
-  # Methods like Twitter's DELETE list membership expect that the user id will 
-  # be form encoded like a POST request in the body. Net::HTTP seems to think 
+
+  # Methods like Twitter's DELETE list membership expect that the user id will
+  # be form encoded like a POST request in the body. Net::HTTP seems to think
   # that DELETEs can't have body parameters so we have to work around that.
   def test_delete_can_send_body_parameters
     client = new_client(200,'{"id":12345,"name":"Test List","members":0}')
@@ -329,7 +329,7 @@ class TestClient < Test::Unit::TestCase
     assert_equal('/1/some_user/some_list/members.json',client.transport.url.path)
     assert_match(/user_id=12345/,Net::HTTP.request.body,"Parameters should be form encoded")
   end
-  
+
   private
     def with_http_responder(responder)
       Net::HTTP.responder = responder
@@ -337,13 +337,13 @@ class TestClient < Test::Unit::TestCase
     ensure
       Net::HTTP.responder = nil
     end
-    
+
     def new_client(response_status, response_body, client_opts={})
       client = Grackle::Client.new(client_opts)
       client.transport = MockTransport.new(response_status,response_body)
       client
     end
-    
+
     def test_simple_post(client)
       client.transport = MockTransport.new(200,'{"id":12345,"text":"test status"}')
       value = client.statuses.update! :status=>'test status'
@@ -355,5 +355,5 @@ class TestClient < Test::Unit::TestCase
       assert_equal(12345,value.id)
       yield(client) if block_given?
     end
-  
+
 end
