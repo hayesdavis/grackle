@@ -105,6 +105,7 @@ module Grackle
     # - :password       - twitter password to authenticate with (deprecated in favor of :auth arg)
     # - :handlers       - Hash of formats to Handler instances (e.g. {:json=>CustomJSONHandler.new})
     # - :default_format - Symbol of format to use when no format is specified in an API call (e.g. :json, :xml)
+    # - :format_in_path - true or false to include format as extension in URL. Default is true (include format in path).
     # - :headers        - Hash of string keys and values for headers to pass in the HTTP request to twitter
     # - :ssl            - true or false to turn SSL on or off. Default is off (i.e. http://)
     # - :api            - one of :rest, :search or :v1. :v1 is the default and :rest is now deprecated
@@ -116,6 +117,7 @@ module Grackle
       self.handlers = {:json=>Handlers::JSONHandler.new,:xml=>Handlers::XMLHandler.new,:unknown=>Handlers::StringHandler.new}
       self.handlers.merge!(options[:handlers]||{})
       self.default_format = options[:default_format] || :json 
+      self.format_in_path = options.has_key?(:format_in_path) ? options[:format_in_path] : true
       self.headers = {"User-Agent"=>"Grackle/#{Grackle::VERSION}"}.merge!(options[:headers]||{})
       self.ssl = options[:ssl] == true
       self.api = options[:api] || :v1
@@ -218,7 +220,7 @@ module Grackle
           id = request.params.delete(:id)
           request << "/#{id}" if id
         end
-        request << ".#{format}"
+        request << ".#{format}" if format_in_path
         res = send_request
         process_response(format,res)
       ensure
