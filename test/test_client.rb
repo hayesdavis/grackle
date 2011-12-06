@@ -104,6 +104,27 @@ class TestClient < Test::Unit::TestCase
     end
     assert_equal(redirects+1,req_count)
   end
+
+  def test_rate_limit
+    responder = Proc.new do |inst,req|
+      MockResponse.new( 200, '{"id":12345,"screen_name":"test_user"}', 
+        'X-RateLimit-Limit' => '20000',
+        'X-RateLimit-Remaining' => '19997',
+        'X-RateLimit-Reset' => '1234567890',
+        'X-RateLimit-Class' => 'api_whitelisted'
+      )
+    end
+    with_http_responder( responder ) do
+      client = Grackle::Client.new()
+      value = client.users.show.json? :screen_name=>'test_user'
+      assert_not_nil client.rate_limit
+      assert_equal '20000', client.rate_limit[:limit]
+      assert_equal '19997', client.rate_limit[:remaining]
+      assert_equal '1234567890', client.rate_limit[:reset]
+      assert_equal 'api_whitelisted', client.rate_limit[:class]
+      assert_equal(12345,value.id)
+    end
+  end
   
   def test_timeouts
     client = new_client(200,'{"id":12345,"screen_name":"test_user"}')
