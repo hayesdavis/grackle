@@ -1,6 +1,6 @@
 require File.dirname(__FILE__) + '/test_helper'
 
-class TestClient < Test::Unit::TestCase
+class ClientTest < Test::Unit::TestCase
   
   #Used for mocking HTTP requests
   class Net::HTTP
