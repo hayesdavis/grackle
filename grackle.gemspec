@@ -4,7 +4,6 @@ require 'grackle/version'
 Gem::Specification.new do |s|
   s.name        = "grackle"
   s.version     = Grackle::VERSION
-  s.date        = Time.now.utc.strftime('%Y-%m-%d')
   s.summary     = "Grackle is a lightweight library for the Twitter REST and Search API."
   s.homepage    = "http://github.com/hayesdavis/grackle"
 
