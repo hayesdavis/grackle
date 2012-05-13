@@ -311,7 +311,22 @@ class TestClient < Test::Unit::TestCase
     assert_equal(12345,client.transport.options[:params][:id], "Id should be treated as a parameter")
     assert_equal("id=#{12345}",Net::HTTP.request.path.split(/\?/)[1],"id should be part of the query string")    
   end
-  
+
+  def test_auto_append_format_is_honored
+    client = new_client(200,'{"id":12345,"screen_name":"test_user"}')
+    client.users.show.hayesdavis?
+    assert_equal('/1/users/show/hayesdavis.json',client.transport.url.path,"Format should be appended by default")
+    client.auto_append_format = false
+    client.users.show.hayesdavis?
+    assert_equal('/1/users/show/hayesdavis',client.transport.url.path,"Format should not be appended to the URI")
+  end
+
+  def test_auto_append_format_can_be_set_in_constructor
+    client = new_client(200,'{"id":12345,"screen_name":"test_user"}',:auto_append_format=>false)
+    client.users.show.hayesdavis?
+    assert_equal('/1/users/show/hayesdavis',client.transport.url.path,"Format should not be appended to the URI")
+  end
+
   def test_default_api
     client = Grackle::Client.new
     assert_equal(:v1,client.api,":v1 should be default api")
