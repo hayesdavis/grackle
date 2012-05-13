@@ -98,7 +98,7 @@ module Grackle
     }
     
     attr_accessor :auth, :handlers, :default_format, :headers, :ssl, :api, 
-      :transport, :request, :api_hosts, :timeout, :auto_append_ids
+      :transport, :request, :api_hosts, :timeout, :auto_append_ids, :rate_limit
     
     # Arguments (all are optional):
     # - :username       - twitter username to authenticate with (deprecated in favor of :auth arg)
@@ -247,6 +247,7 @@ module Grackle
           unless res.status == 200
             handle_error_response(res,fmt_handler)
           else
+            self.rate_limit = res.rate_limit
             fmt_handler.decode_response(res.body)
           end
         rescue TwitterError => e

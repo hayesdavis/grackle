@@ -1,13 +1,14 @@
 module Grackle
   
   class Response #:nodoc:
-    attr_accessor :method, :request_uri, :status, :body
+    attr_accessor :method, :request_uri, :status, :body, :rate_limit
     
-    def initialize(method,request_uri,status,body)
+    def initialize(method,request_uri,status,body,rate_limit={})
       self.method = method
       self.request_uri = request_uri
       self.status = status
       self.body = body
+      self.rate_limit = rate_limit unless rate_limit.empty?
     end
   end
   
@@ -74,7 +75,13 @@ module Grackle
         if res.code.to_s =~ /^3\d\d$/ && redirect_limit > 0 && res['location']
           execute_request(method,URI.parse(res['location']),options.merge(:redirect_limit=>redirect_limit-1))
         else 
-          Response.new(method,url.to_s,res.code.to_i,res.body)
+          rate_limit = {
+            :limit      => res['X-RateLimit-Limit'],
+            :remaining  => res['X-RateLimit-Remaining'],
+            :reset      => res['X-RateLimit-Reset'],
+            :class      => res['X-RateLimit-Class']
+          }
+          Response.new(method,url.to_s,res.code.to_i,res.body, rate_limit)
         end
       end
     end
