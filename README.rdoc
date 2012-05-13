@@ -1,28 +1,32 @@
 =grackle
 by Hayes Davis
 - http://twitter.com/hayesdavis
-- hayes [at] appozite [dot] com
-- http://cheaptweet.com
-- http://www.appozite.com
+- hayes [at] unionmetrics [dot] com
+- http://unionmetrics.com
 - http://hayesdavis.net
 
 == DESCRIPTION
-Grackle is a lightweight Ruby wrapper around the Twitter REST and Search APIs. It's based on my experience using the 
-Twitter API to build http://cheaptweet.com. The main goal of Grackle is to never require a release when the Twitter 
-API changes (which it often does) or in the face of a particular Twitter API bug. As such it's somewhat different 
-from other Twitter API libraries. It doesn't try to hide the Twitter "methods" under an access layer nor does it 
-introduce concrete classes for the various objects returned by Twitter. Instead, calls to the Grackle client map 
-directly to Twitter API URLs. The objects returned by API calls are generated as OpenStructs on the fly and make no 
-assumptions about the presence or absence of any particular attributes. Taking this approach means that changes to 
-URLs used by Twitter, parameters required by those URLs or return values will not require a new release. It 
-will potentially require, however, some modifications to your code that uses Grackle. 
+Grackle is a lightweight Ruby wrapper around the Twitter REST and Search APIs.
+It's based on my experience using the Twitter API to build http://cheaptweet.com
+and http://tweetreach.com. The main goal of Grackle is to never require a
+release when the Twitter API changes (which it often does) or in the face of a
+particular Twitter API bug. As such it's somewhat different from other Twitter
+API libraries. It doesn't try to hide the Twitter "methods" under an access
+layer nor does it introduce concrete classes for the various objects returned by
+Twitter. Instead, calls to the Grackle client map directly to Twitter API URLs.
+The objects returned by API calls are generated as OpenStructs on the fly and
+make no assumptions about the presence or absence of any particular attributes.
+Taking this approach means that changes to URLs used by Twitter, parameters
+required by those URLs or return values will not require a new release. It will
+potentially require, however, some modifications to your code that uses Grackle.
 
 === Support and Announcements
-The preferred forum for questions and discussions is the Google group at http://groups.google.com/group/gracklerb. 
-You can email me directly or @reply me on Twitter, but the group is better since the questions and responses 
-will be available to everyone. I'll also make announcements there. There are some examples on the wiki at 
-http://wiki.github.com/hayesdavis/grackle. If you prefer your information in 140 characters, follow 
-@gracklerb[http://twitter.com/gracklerb].
+The preferred forum for questions and discussions is the Google group at
+http://groups.google.com/group/gracklerb. You can email me directly or @reply me
+on Twitter, but the group is better since the questions and responses will be
+available to everyone. I'll also make announcements there. There are some
+examples on the wiki at http://wiki.github.com/hayesdavis/grackle. If you prefer
+your information in 140 characters, follow @gracklerb[http://twitter.com/gracklerb].
 
 ==USING GRACKLE
 
