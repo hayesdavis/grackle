@@ -98,7 +98,7 @@ module Grackle
     }
     
     attr_accessor :auth, :handlers, :default_format, :headers, :ssl, :api, 
-      :transport, :request, :api_hosts, :timeout, :auto_append_ids
+      :transport, :request, :api_hosts, :timeout, :auto_append_ids, :uri_extension
     
     # Arguments (all are optional):
     # - :username       - twitter username to authenticate with (deprecated in favor of :auth arg)
@@ -111,6 +111,7 @@ module Grackle
     # - :auth           - Hash of authentication type and credentials. Must have :type key with value one of :basic or :oauth
     #   - :type=>:basic  - Include :username and :password keys
     #   - :type=>:oauth  - Include :consumer_key, :consumer_secret, :token and :token_secret keys
+    # - :uri_extension   - true or false to include format in URI (e.g. /test.json). Default is true
     def initialize(options={})
       self.transport = Transport.new
       self.handlers = {:json=>Handlers::JSONHandler.new,:xml=>Handlers::XMLHandler.new,:unknown=>Handlers::StringHandler.new}
@@ -123,6 +124,7 @@ module Grackle
       self.timeout = options[:timeout] || 60
       self.auto_append_ids = options[:auto_append_ids] == false ? false : true
       self.auth = {}
+      self.uri_extension = options[:uri_extension] == false ? false : true
       if options.has_key?(:username) || options.has_key?(:password)
         #Use basic auth if :username and :password args are passed in
         self.auth.merge!({:type=>:basic,:username=>options[:username],:password=>options[:password]})
@@ -218,7 +220,9 @@ module Grackle
           id = request.params.delete(:id)
           request << "/#{id}" if id
         end
-        request << ".#{format}"
+        if uri_extension
+          request << ".#{format}"
+        end
         res = send_request
         process_response(format,res)
       ensure
