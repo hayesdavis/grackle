@@ -1,5 +1,3 @@
-$:.unshift File.dirname(__FILE__)
-
 require 'ostruct'
 require 'open-uri'
 require 'net/http'
