@@ -197,7 +197,34 @@ class ClientTest < Test::Unit::TestCase
     assert_equal('TestAgent/1.0',Net::HTTP.request['User-Agent'],"Custom User-Agent header should have been set")
     assert_equal('Header Value',Net::HTTP.request['X-Test-Header'],"Custom X-Test-Header header should have been set")
   end
-  
+
+  def test_default_response_headers
+    client = new_client(200, '[{"id":1,"text":"test 1"}]')
+    client.statuses.public_timeline?
+    headers = client.response.headers
+    assert(!headers.nil?)
+    assert_equal(Grackle::Client::DEFAULT_RESPONSE_HEADERS.count, headers.count)
+
+    Grackle::Client::DEFAULT_RESPONSE_HEADERS.each do |h|
+      assert(!headers[h].nil?, "Missing #{h}")
+    end
+  end
+
+  def test_custom_response_headers
+    response_headers = ['X-Your-Face-Header']
+
+    client = new_client(200, '[{"id":1,"text":"test 1"}]', :response_headers=>response_headers)
+    client.statuses.public_timeline?
+    headers = client.response.headers
+    assert(!headers.nil?)
+    all_of_the_headers = Grackle::Client::DEFAULT_RESPONSE_HEADERS | response_headers
+    assert_equal(all_of_the_headers.count, headers.count)
+
+    all_of_the_headers.each do |h|
+      assert(!headers[h].nil?, "Missing #{h}")
+    end
+  end
+
   def test_custom_handlers
     client = new_client(200,'[{"id":1,"text":"test 1"}]',:handlers=>{:json=>TestHandler.new(42)})
     value = client.statuses.public_timeline.json?
@@ -209,7 +236,7 @@ class ClientTest < Test::Unit::TestCase
     client.some.url.that.does.not.exist
     assert_equal('/some/url/that/does/not/exist',client.send(:request).path,"An unexecuted path should be built up")
     client.clear
-    assert_equal('',client.send(:request).path,"The path shoudl be cleared")
+    assert_equal('',client.send(:request).path,"The path should be cleared")
   end
   
   def test_file_param_triggers_multipart_encoding
