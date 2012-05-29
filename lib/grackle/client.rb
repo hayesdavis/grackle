@@ -89,7 +89,14 @@ module Grackle
       :search=>'search.twitter.com', :v1=>'api.twitter.com/1'
     }
     TWITTER_API_HOSTS[:rest] = TWITTER_API_HOSTS[:v1]
-    
+
+    # Contains the response headers from twitter
+    DEFAULT_RESPONSE_HEADERS =[
+      'x-ratelimit-limit',
+      'x-ratelimit-remaining',
+      'x-ratelimit-reset'
+    ]
+
     #Basic OAuth information needed to communicate with Twitter
     TWITTER_OAUTH_SPEC = {
       :request_token_path=>'/oauth/request_token',
@@ -99,7 +106,7 @@ module Grackle
     
     attr_accessor :auth, :handlers, :default_format, :headers, :ssl, :api, 
       :transport, :request, :api_hosts, :timeout, :auto_append_ids,
-      :auto_append_format
+      :auto_append_format, :response_headers, :response
     
     # Arguments (all are optional):
     # - :username           - Twitter username to authenticate with (deprecated in favor of :auth arg)
@@ -113,6 +120,7 @@ module Grackle
     #   - :type=>:basic     - Include :username and :password keys
     #   - :type=>:oauth     - Include :consumer_key, :consumer_secret, :token and :token_secret keys
     # - :auto_append_format - true or false to include format in URI (e.g. /test.json). Default is true
+    # - :response_headers   - array of headers to return from the response
     def initialize(options={})
       self.transport = Transport.new
       self.handlers = {:json=>Handlers::JSONHandler.new,:xml=>Handlers::XMLHandler.new,:unknown=>Handlers::StringHandler.new}
@@ -126,6 +134,7 @@ module Grackle
       self.timeout = options[:timeout] || 60
       self.auto_append_ids = options[:auto_append_ids] == false ? false : true
       self.auth = {}
+      self.response_headers = DEFAULT_RESPONSE_HEADERS | (options[:response_headers] || [])
       if options.has_key?(:username) || options.has_key?(:password)
         #Use basic auth if :username and :password args are passed in
         self.auth.merge!({:type=>:basic,:username=>options[:username],:password=>options[:password]})
@@ -235,10 +244,11 @@ module Grackle
           http_method = (
             request.params.delete(:__method) or request.method or :get
           )
-          transport.request(
+          @response = transport.request(
             http_method, request.url,
             :auth=>auth,:headers=>headers,
-            :params=>request.params,:timeout => timeout
+            :params=>request.params,:timeout=>timeout,
+            :response_headers=>response_headers
           )
         rescue => e
           puts e
