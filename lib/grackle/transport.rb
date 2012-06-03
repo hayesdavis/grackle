@@ -1,12 +1,46 @@
 module Grackle
-  
+
+  class Headers #:nodoc:
+    include Enumerable
+
+    def initialize
+      @data = {}
+    end
+
+    def [](name)
+      res = @data[name.downcase.to_sym]
+      res ? res.join(",") : nil
+    end
+
+    def []=(name,value)
+      @data[name.downcase.to_sym] = [value]
+    end
+
+    def add(name,value)
+      res = (@data[name.downcase.to_sym] ||= [])
+      res << value
+    end
+
+    def add_all(name,values)
+      res = (@data[name.downcase.to_sym] ||= [])
+      res.push(*values)
+    end
+
+    def each
+      @data.each do |name,value|
+        yield(name.to_s,value.join(","))
+      end
+    end
+  end
+
   class Response #:nodoc:
-    attr_accessor :method, :request_uri, :status, :body
+    attr_accessor :method, :request_uri, :status, :body, :headers
     
-    def initialize(method,request_uri,status,body)
+    def initialize(method,request_uri,status,body,headers)
       self.method = method
       self.request_uri = request_uri
       self.status = status
+      self.headers = headers
       self.body = body
     end
   end
@@ -32,6 +66,7 @@ module Grackle
     # - :headers - a hash of headers to send with the request
     # - :auth - a hash of authentication parameters for either basic or oauth
     # - :timeout - timeout for the http request in seconds
+    # - :response_headers - a list of headers to return with the response
     def request(method, string_url, options={})
       params = stringify_params(options[:params])
       if method == :get && params
@@ -73,8 +108,9 @@ module Grackle
         redirect_limit = options[:redirect_limit] || DEFAULT_REDIRECT_LIMIT
         if res.code.to_s =~ /^3\d\d$/ && redirect_limit > 0 && res['location']
           execute_request(method,URI.parse(res['location']),options.merge(:redirect_limit=>redirect_limit-1))
-        else 
-          Response.new(method,url.to_s,res.code.to_i,res.body)
+        else
+          headers = filter_headers(options[:response_headers],res)
+          Response.new(method,url.to_s,res.code.to_i,res.body,headers)
         end
       end
     end
@@ -197,6 +233,14 @@ module Grackle
         msg.each_header do |key, value|
           puts "\t#{key}=#{value}"
         end
+      end
+
+      def filter_headers(headers, res)
+        filtered = Headers.new
+        headers.each do |h|
+          filtered.add(h, res[h])
+        end
+        filtered
       end
 
       def http_class
