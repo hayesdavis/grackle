@@ -31,6 +31,10 @@ module Grackle
         yield(name.to_s,value.join(","))
       end
     end
+
+    def size
+      @data.size
+    end
   end
 
   class Response #:nodoc:

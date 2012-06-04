@@ -200,29 +200,39 @@ class ClientTest < Test::Unit::TestCase
 
   def test_default_response_headers
     client = new_client(200, '[{"id":1,"text":"test 1"}]')
+
+    # Load up some other headers in the response
+    Grackle::Client::DEFAULT_RESPONSE_HEADERS.each_with_index do |header,i|
+      Net::HTTP.response[header] = "value#{i}"
+    end
+
     client.statuses.public_timeline?
     headers = client.response.headers
     assert(!headers.nil?)
-    assert_equal(Grackle::Client::DEFAULT_RESPONSE_HEADERS.count, headers.count)
+    assert_equal(Grackle::Client::DEFAULT_RESPONSE_HEADERS.size, headers.size)
 
-    Grackle::Client::DEFAULT_RESPONSE_HEADERS.each do |h|
-      assert(!headers[h].nil?, "Missing #{h}")
+    Grackle::Client::DEFAULT_RESPONSE_HEADERS.each_with_index do |h,i|
+      assert_equal("value#{i}",headers[h])
     end
   end
 
   def test_custom_response_headers
     response_headers = ['X-Your-Face-Header']
-
     client = new_client(200, '[{"id":1,"text":"test 1"}]', :response_headers=>response_headers)
+
+    # Load up some other headers in the response
+    Net::HTTP.response["X-Your-Face-Header"] = "asdf"
+    Net::HTTP.response["X-Something-Else"] = "foo"
+
+    assert_equal(response_headers,client.response_headers,"Response headers should override defaults")
+
     client.statuses.public_timeline?
     headers = client.response.headers
     assert(!headers.nil?)
-    all_of_the_headers = Grackle::Client::DEFAULT_RESPONSE_HEADERS | response_headers
-    assert_equal(all_of_the_headers.count, headers.count)
+    assert_equal(response_headers.size, headers.size)
 
-    all_of_the_headers.each do |h|
-      assert(!headers[h].nil?, "Missing #{h}")
-    end
+    assert_equal("asdf",headers["X-Your-Face-Header"])
+    assert(headers["X-Something-Else"].nil?)
   end
 
   def test_custom_handlers
