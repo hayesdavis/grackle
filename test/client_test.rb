@@ -403,7 +403,13 @@ class ClientTest < Test::Unit::TestCase
       assert_equal('http',client.transport.url.scheme,"Expected scheme to be http")
       assert_equal('api.twitter.com',client.transport.url.host,"Expected request to be against twitter.com")
       assert_equal('/1/statuses/update.json',client.transport.url.path)
-      assert_match(/status=test%20status/,Net::HTTP.request.body,"Parameters should be form encoded")
+
+      if RUBY_VERSION >= "1.9.3"
+        # 1.9.3 encodes a space with a + instead of %20
+        assert_match(/status=test\+status/,Net::HTTP.request.body,"Parameters should be form encoded")
+      else
+        assert_match(/status=test%20status/,Net::HTTP.request.body,"Parameters should be form encoded")
+      end
       assert_equal(12345,value.id)
       yield(client) if block_given?
     end
