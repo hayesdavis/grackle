@@ -187,26 +187,17 @@ You'll need the following gems to use all features of Grackle:
 - mime-types
 
 === Ruby Version Support
-Grackle works just fine on Ruby 1.8.x. It is also known to work on 1.9.1 with 
-the exception of OAuth. The OAuth gem used by Grackle has not been updated fully 
-to support 1.9. Please see this thread[http://groups.google.com/group/oauth-ruby/browse_thread/thread/d0851a907878cd22] 
-for more information.
+Grackle is tested on 1.8.6, 1.8.7, 1.9.2 and 1.9.3.
 
-Once the OAuth gem has been updated, Grackle will work fully on 1.9. If you 
-aren't using OAuth it should be fine for use on 1.9 as is.
+If you are using 1.8.6, please be aware that certain newer versions of the json
+and oauth gems are not compatible with that Ruby version. You can use older
+version and grackle will work fine. On 1.8.6, I recommend using oauth 0.4.4 and
+json < 1.7.
 
 == INSTALL
-The grackle gem is now hosted at http://gemcutter.org. If you've already setup gemcutter 
-in your sources, you can do the following:
-  sudo gem install grackle
+Grackle is available on rubygems.org. Just do the usual:
 
-If you haven't yet setup gemcutter in your sources, go to http://gemcutter.org and follow the instructions there.
-They will likely tell you to do the following:
-  sudo gem install gemcutter
-  sudo gem tumble
-
-Once you've done that you can do: 
-  sudo gem install grackle
+  gem install grackle
 
 == LICENSE
 

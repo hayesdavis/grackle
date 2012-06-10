@@ -3,6 +3,7 @@
 * New response attribute which captures raw info about the response from the most recent request. This permits access to response headers with rate limit information. Thanks to @mandoescamilla.
 * Added Twitter's media upload endpoint. Thanks @jbrennon.
 * Modernized the code a bit with better test running and a new gemspec
+* Now testing in 1.8.6, 1.8.7, 1.9.2 and 1.9.3
 
 == 0.1.10 (2010-6-13)
 * Changed :v1 (api.twitter.com/1) to be the default API instead of REST. :rest is now deprecated
