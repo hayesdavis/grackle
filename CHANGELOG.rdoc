@@ -1,6 +1,7 @@
 == 0.2.0 (2012-6-10)
 * New auto_append_format attribute (thanks @jcsaleterego) for specifying whether or not to automatically add .json, etc to a request URI
 * New response attribute which captures raw info about the response from the most recent request. This permits access to response headers with rate limit information. Thanks to @mandoescamilla.
+* Added Twitter's media upload endpoint. Thanks @jbrennon.
 * Modernized the code a bit with better test running and a new gemspec
 
 == 0.1.10 (2010-6-13)
