@@ -1,6 +1,6 @@
 require File.dirname(__FILE__) + '/test_helper'
 
-class TestHandlers < Test::Unit::TestCase
+class HandlersTest < Test::Unit::TestCase
   
   def test_string_handler_echoes
     sh = Grackle::Handlers::StringHandler.new

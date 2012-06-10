@@ -133,6 +133,23 @@ Search and REST requests are all built using the same method chaining and termin
 Regardless of the format used, Grackle returns an OpenStruct (actually a Grackle::TwitterStruct) of data. The attributes 
 available on these structs correspond to the data returned by Twitter.
 
+===Rate Limits and the Response
+The Grackle client has a response method which is populated with information
+about the most recent response received as a result of a request. This response
+contains the requested URI, the HTTP status code, a subset of the response
+headers and the raw response body. The response headers are the most useful
+because they can be used to retrieve the rate limit information that Twitter
+includes in a response.
+
+  user = client.users.show.hayesdavis?
+  client.response.headers["X-Ratelimit-Remaining"]
+
+Not all headers returned by Twitter are included by default. You can control
+which headers are accessible with the response_headers attribute on the Client.
+By default, the important rate limit headers are returned. Please note that all
+header values will be Strings so you'll need to convert rate limits, etc to ints
+in your code.
+
 ===Dealing with Errors
 If the request to Twitter does not return a status code of 200, then a TwitterError is thrown. This contains the HTTP method used, 
 the full request URI, the response status, the response body in text and a response object build by parsing the formatted error 

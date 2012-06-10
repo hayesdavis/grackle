@@ -1,6 +1,6 @@
 require File.dirname(__FILE__) + '/test_helper'
 
-class TestClient < Test::Unit::TestCase
+class ClientTest < Test::Unit::TestCase
   
   #Used for mocking HTTP requests
   class Net::HTTP
@@ -197,7 +197,44 @@ class TestClient < Test::Unit::TestCase
     assert_equal('TestAgent/1.0',Net::HTTP.request['User-Agent'],"Custom User-Agent header should have been set")
     assert_equal('Header Value',Net::HTTP.request['X-Test-Header'],"Custom X-Test-Header header should have been set")
   end
-  
+
+  def test_default_response_headers
+    client = new_client(200, '[{"id":1,"text":"test 1"}]')
+
+    # Load up some other headers in the response
+    Grackle::Client::DEFAULT_RESPONSE_HEADERS.each_with_index do |header,i|
+      Net::HTTP.response[header] = "value#{i}"
+    end
+
+    client.statuses.public_timeline?
+    headers = client.response.headers
+    assert(!headers.nil?)
+    assert_equal(Grackle::Client::DEFAULT_RESPONSE_HEADERS.size, headers.size)
+
+    Grackle::Client::DEFAULT_RESPONSE_HEADERS.each_with_index do |h,i|
+      assert_equal("value#{i}",headers[h])
+    end
+  end
+
+  def test_custom_response_headers
+    response_headers = ['X-Your-Face-Header']
+    client = new_client(200, '[{"id":1,"text":"test 1"}]', :response_headers=>response_headers)
+
+    # Load up some other headers in the response
+    Net::HTTP.response["X-Your-Face-Header"] = "asdf"
+    Net::HTTP.response["X-Something-Else"] = "foo"
+
+    assert_equal(response_headers,client.response_headers,"Response headers should override defaults")
+
+    client.statuses.public_timeline?
+    headers = client.response.headers
+    assert(!headers.nil?)
+    assert_equal(response_headers.size, headers.size)
+
+    assert_equal("asdf",headers["X-Your-Face-Header"])
+    assert(headers["X-Something-Else"].nil?)
+  end
+
   def test_custom_handlers
     client = new_client(200,'[{"id":1,"text":"test 1"}]',:handlers=>{:json=>TestHandler.new(42)})
     value = client.statuses.public_timeline.json?
@@ -209,7 +246,7 @@ class TestClient < Test::Unit::TestCase
     client.some.url.that.does.not.exist
     assert_equal('/some/url/that/does/not/exist',client.send(:request).path,"An unexecuted path should be built up")
     client.clear
-    assert_equal('',client.send(:request).path,"The path shoudl be cleared")
+    assert_equal('',client.send(:request).path,"The path should be cleared")
   end
   
   def test_file_param_triggers_multipart_encoding
@@ -311,7 +348,22 @@ class TestClient < Test::Unit::TestCase
     assert_equal(12345,client.transport.options[:params][:id], "Id should be treated as a parameter")
     assert_equal("id=#{12345}",Net::HTTP.request.path.split(/\?/)[1],"id should be part of the query string")    
   end
-  
+
+  def test_auto_append_format_is_honored
+    client = new_client(200,'{"id":12345,"screen_name":"test_user"}')
+    client.users.show.hayesdavis?
+    assert_equal('/1/users/show/hayesdavis.json',client.transport.url.path,"Format should be appended by default")
+    client.auto_append_format = false
+    client.users.show.hayesdavis?
+    assert_equal('/1/users/show/hayesdavis',client.transport.url.path,"Format should not be appended to the URI")
+  end
+
+  def test_auto_append_format_can_be_set_in_constructor
+    client = new_client(200,'{"id":12345,"screen_name":"test_user"}',:auto_append_format=>false)
+    client.users.show.hayesdavis?
+    assert_equal('/1/users/show/hayesdavis',client.transport.url.path,"Format should not be appended to the URI")
+  end
+
   def test_default_api
     client = Grackle::Client.new
     assert_equal(:v1,client.api,":v1 should be default api")

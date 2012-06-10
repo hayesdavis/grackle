@@ -89,7 +89,14 @@ module Grackle
       :search=>'search.twitter.com', :v1=>'api.twitter.com/1'
     }
     TWITTER_API_HOSTS[:rest] = TWITTER_API_HOSTS[:v1]
-    
+
+    # Contains the response headers from twitter
+    DEFAULT_RESPONSE_HEADERS =[
+      'x-ratelimit-limit',
+      'x-ratelimit-remaining',
+      'x-ratelimit-reset'
+    ]
+
     #Basic OAuth information needed to communicate with Twitter
     TWITTER_OAUTH_SPEC = {
       :request_token_path=>'/oauth/request_token',
@@ -98,25 +105,28 @@ module Grackle
     }
     
     attr_accessor :auth, :handlers, :default_format, :headers, :ssl, :api, 
-      :transport, :request, :api_hosts, :timeout, :auto_append_ids, :uri_extension
+      :transport, :request, :api_hosts, :timeout, :auto_append_ids,
+      :auto_append_format, :response_headers, :response
     
     # Arguments (all are optional):
-    # - :username       - twitter username to authenticate with (deprecated in favor of :auth arg)
-    # - :password       - twitter password to authenticate with (deprecated in favor of :auth arg)
-    # - :handlers       - Hash of formats to Handler instances (e.g. {:json=>CustomJSONHandler.new})
-    # - :default_format - Symbol of format to use when no format is specified in an API call (e.g. :json, :xml)
-    # - :headers        - Hash of string keys and values for headers to pass in the HTTP request to twitter
-    # - :ssl            - true or false to turn SSL on or off. Default is off (i.e. http://)
-    # - :api            - one of :rest, :search or :v1. :v1 is the default and :rest is now deprecated
-    # - :auth           - Hash of authentication type and credentials. Must have :type key with value one of :basic or :oauth
-    #   - :type=>:basic  - Include :username and :password keys
-    #   - :type=>:oauth  - Include :consumer_key, :consumer_secret, :token and :token_secret keys
-    # - :uri_extension   - true or false to include format in URI (e.g. /test.json). Default is true
+    # - :username           - Twitter username to authenticate with (deprecated in favor of :auth arg)
+    # - :password           - Twitter password to authenticate with (deprecated in favor of :auth arg)
+    # - :handlers           - Hash of formats to Handler instances (e.g. {:json=>CustomJSONHandler.new})
+    # - :default_format     - Symbol of format to use when no format is specified in an API call (e.g. :json, :xml)
+    # - :headers            - Hash of string keys and values for headers to pass in the HTTP request to twitter
+    # - :ssl                - true or false to turn SSL on or off. Default is off (i.e. http://)
+    # - :api                - one of :rest, :search or :v1. :v1 is the default and :rest is now deprecated
+    # - :auth               - Hash of authentication type and credentials. Must have :type key with value one of :basic or :oauth
+    #   - :type=>:basic     - Include :username and :password keys
+    #   - :type=>:oauth     - Include :consumer_key, :consumer_secret, :token and :token_secret keys
+    # - :auto_append_format - true or false to include format in URI (e.g. /test.json). Default is true
+    # - :response_headers   - array of headers to return from the response
     def initialize(options={})
       self.transport = Transport.new
       self.handlers = {:json=>Handlers::JSONHandler.new,:xml=>Handlers::XMLHandler.new,:unknown=>Handlers::StringHandler.new}
       self.handlers.merge!(options[:handlers]||{})
       self.default_format = options[:default_format] || :json 
+      self.auto_append_format = options[:auto_append_format] == false ? false : true
       self.headers = {"User-Agent"=>"Grackle/#{Grackle::VERSION}"}.merge!(options[:headers]||{})
       self.ssl = options[:ssl] == true
       self.api = options[:api] || :v1
@@ -124,7 +134,7 @@ module Grackle
       self.timeout = options[:timeout] || 60
       self.auto_append_ids = options[:auto_append_ids] == false ? false : true
       self.auth = {}
-      self.uri_extension = options[:uri_extension] == false ? false : true
+      self.response_headers = options[:response_headers] || DEFAULT_RESPONSE_HEADERS
       if options.has_key?(:username) || options.has_key?(:password)
         #Use basic auth if :username and :password args are passed in
         self.auth.merge!({:type=>:basic,:username=>options[:username],:password=>options[:password]})
@@ -220,7 +230,7 @@ module Grackle
           id = request.params.delete(:id)
           request << "/#{id}" if id
         end
-        if uri_extension
+        if auto_append_format
           request << ".#{format}"
         end
         res = send_request
@@ -234,10 +244,11 @@ module Grackle
           http_method = (
             request.params.delete(:__method) or request.method or :get
           )
-          transport.request(
+          @response = transport.request(
             http_method, request.url,
             :auth=>auth,:headers=>headers,
-            :params=>request.params,:timeout => timeout
+            :params=>request.params,:timeout=>timeout,
+            :response_headers=>response_headers
           )
         rescue => e
           puts e
