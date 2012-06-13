@@ -381,7 +381,19 @@ class ClientTest < Test::Unit::TestCase
     assert_equal('/1/some_user/some_list/members.json',client.transport.url.path)
     assert_match(/user_id=12345/,Net::HTTP.request.body,"Parameters should be form encoded")
   end
-  
+
+  def test_valid_http_codes_causes_error_not_to_raise
+    client = new_client(202,'{"id":12345,"screen_name":"test_user"}')
+    assert_raise(Grackle::TwitterError) do
+      value = client.users.show.json? :screen_name=>'test_user'
+    end
+
+    client = new_client(202,'{"id":12345,"screen_name":"test_user"}',:valid_http_codes=>[200,202])
+    assert_nothing_raised do
+      value = client.users.show.json? :screen_name=>'test_user'
+    end
+  end
+
   private
     def with_http_responder(responder)
       Net::HTTP.responder = responder

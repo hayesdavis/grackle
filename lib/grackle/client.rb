@@ -79,7 +79,8 @@ module Grackle
       end
     end
     
-    VALID_FORMATS = [:json,:xml,:atom,:rss]
+    VALID_FORMATS     = [:json,:xml,:atom,:rss]
+    VALID_HTTP_CODES  = [200]
 
     # Contains the mapping of API name symbols to actual host (and path) 
     # prefixes to use with requests. You can add your own to this hash and 
@@ -107,7 +108,7 @@ module Grackle
     
     attr_accessor :auth, :handlers, :default_format, :headers, :ssl, :api, 
       :transport, :request, :api_hosts, :timeout, :auto_append_ids,
-      :auto_append_format, :response_headers, :response
+      :auto_append_format, :response_headers, :response, :valid_http_codes
     
     # Arguments (all are optional):
     # - :username           - Twitter username to authenticate with (deprecated in favor of :auth arg)
@@ -122,6 +123,7 @@ module Grackle
     #   - :type=>:oauth     - Include :consumer_key, :consumer_secret, :token and :token_secret keys
     # - :auto_append_format - true or false to include format in URI (e.g. /test.json). Default is true
     # - :response_headers   - array of headers to return from the response
+    # - :valid_http_codes   - array of HTTP codes to consider valid (non-error)
     def initialize(options={})
       self.transport = Transport.new
       self.handlers = {:json=>Handlers::JSONHandler.new,:xml=>Handlers::XMLHandler.new,:unknown=>Handlers::StringHandler.new}
@@ -136,6 +138,7 @@ module Grackle
       self.auto_append_ids = options[:auto_append_ids] == false ? false : true
       self.auth = {}
       self.response_headers = options[:response_headers] || DEFAULT_RESPONSE_HEADERS
+      self.valid_http_codes = options[:valid_http_codes] || VALID_HTTP_CODES.dup
       if options.has_key?(:username) || options.has_key?(:password)
         #Use basic auth if :username and :password args are passed in
         self.auth.merge!({:type=>:basic,:username=>options[:username],:password=>options[:password]})
@@ -260,7 +263,7 @@ module Grackle
       def process_response(format,res)
         fmt_handler = handler(format)        
         begin
-          unless res.status == 200
+          unless self.valid_http_codes.include?(res.status)
             handle_error_response(res,fmt_handler)
           else
             fmt_handler.decode_response(res.body)
