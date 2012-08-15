@@ -137,8 +137,8 @@ module Grackle
       self.timeout = options[:timeout] || 60
       self.auto_append_ids = options[:auto_append_ids] == false ? false : true
       self.auth = {}
-      self.response_headers = options[:response_headers] || DEFAULT_RESPONSE_HEADERS
-      self.valid_http_codes = options[:valid_http_codes] || VALID_HTTP_CODES.dup
+      self.response_headers = options[:response_headers] || DEFAULT_RESPONSE_HEADERS.clone
+      self.valid_http_codes = options[:valid_http_codes] || VALID_HTTP_CODES.clone
       if options.has_key?(:username) || options.has_key?(:password)
         #Use basic auth if :username and :password args are passed in
         self.auth.merge!({:type=>:basic,:username=>options[:username],:password=>options[:password]})
