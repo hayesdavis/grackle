@@ -1,19 +1,22 @@
-== 0.2.0 (2012-6-10)
+== 0.2.1 (2012-08-14)
+* Add :valid_http_codes option that tells grackle not to raise an error when encountering those statuses.
+
+== 0.2.0 (2012-06-10)
 * New auto_append_format attribute (thanks @jcsalterego) for specifying whether or not to automatically add .json, etc to a request URI
 * New response attribute which captures raw info about the response from the most recent request. This permits access to response headers with rate limit information. Thanks to @mandoescamilla.
 * Added Twitter's media upload endpoint. Thanks @jbrennon.
 * Modernized the code a bit with better test running and a new gemspec
 * Now testing in 1.8.6, 1.8.7, 1.9.2 and 1.9.3
 
-== 0.1.10 (2010-6-13)
+== 0.1.10 (2010-06-13)
 * Changed :v1 (api.twitter.com/1) to be the default API instead of REST. :rest is now deprecated
 * Fixed issue with DELETE requests not being able to have form encoded body parameters. This was causing the list membership delete method to fail. As a side note, it appears that Twitter is actually violating the HTTP 1.1 spec on this one since RFC 2616 states that a DELETE "requests that the origin server delete the resource identified by the Request-URI" (note no mention of any "enclosed entity").
 
-== 0.1.9 (2010-2-28)
+== 0.1.9 (2010-02-28)
 * Added support for a boolean option called auto_append_ids that controls whether parameters named "id" are automatically appended to the URL or used as request parameters. It's true by default so there's no change to existing behavior unless you explicitly set it to false.
 * Updated the README with changes describing how to use custom handlers (thanks akahn!)
 
-== 0.1.8 (2010-2-2)
+== 0.1.8 (2010-02-02)
 * Added proxy support to Grackle::Transport via proxy attribute. Can specify a Proc that returns a Net::HTTP subclass or a Net::HTTP subclass directly. Typically this will be from Net::HTTP.Proxy.
 
 == 0.1.7 (2009-12-13)
