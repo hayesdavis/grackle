@@ -88,7 +88,7 @@ module Grackle
     # to do this when Twitter introduces API versions greater than 1.
     TWITTER_API_HOSTS = {
       :search=>'search.twitter.com', :v1=>'api.twitter.com/1',
-      :upload=>'upload.twitter.com/1'
+      'v1.1'.to_sym=>'api.twitter.com/1.1', :upload=>'upload.twitter.com/1'
     }
     TWITTER_API_HOSTS[:rest] = TWITTER_API_HOSTS[:v1]
 
@@ -132,7 +132,7 @@ module Grackle
       self.auto_append_format = options[:auto_append_format] == false ? false : true
       self.headers = {"User-Agent"=>"Grackle/#{Grackle::VERSION}"}.merge!(options[:headers]||{})
       self.ssl = options[:ssl] == true
-      self.api = options[:api] || :v1
+      self.api = options[:api] || 'v1.1'.to_sym
       self.api_hosts = TWITTER_API_HOSTS.clone
       self.timeout = options[:timeout] || 60
       self.auto_append_ids = options[:auto_append_ids] == false ? false : true
