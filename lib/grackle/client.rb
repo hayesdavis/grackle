@@ -87,7 +87,8 @@ module Grackle
     # refer to it wherever Grackle::Client uses an API symbol. You may wish 
     # to do this when Twitter introduces API versions greater than 1.
     TWITTER_API_HOSTS = {
-      :search=>'search.twitter.com', :v1=>'api.twitter.com/1',
+      :v1=>'api.twitter.com/1', :v1_1=>'api.twitter.com/1.1',
+      :search=>'search.twitter.com',
       :upload=>'upload.twitter.com/1'
     }
     TWITTER_API_HOSTS[:rest] = TWITTER_API_HOSTS[:v1]
