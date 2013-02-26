@@ -202,16 +202,16 @@ class ClientTest < Test::Unit::TestCase
     client = new_client(200, '[{"id":1,"text":"test 1"}]')
 
     # Load up some other headers in the response
-    Grackle::Client::DEFAULT_RESPONSE_HEADERS.each_with_index do |header,i|
+    Grackle::Client::DEFAULT_RESPONSE_HEADERS[:v1].each_with_index do |header,i|
       Net::HTTP.response[header] = "value#{i}"
     end
 
     client.statuses.public_timeline?
     headers = client.response.headers
     assert(!headers.nil?)
-    assert_equal(Grackle::Client::DEFAULT_RESPONSE_HEADERS.size, headers.size)
+    assert_equal(Grackle::Client::DEFAULT_RESPONSE_HEADERS[:v1].size, headers.size)
 
-    Grackle::Client::DEFAULT_RESPONSE_HEADERS.each_with_index do |h,i|
+    Grackle::Client::DEFAULT_RESPONSE_HEADERS[:v1].each_with_index do |h,i|
       assert_equal("value#{i}",headers[h])
     end
   end
@@ -392,6 +392,17 @@ class ClientTest < Test::Unit::TestCase
     assert_nothing_raised do
       value = client.users.show.json? :screen_name=>'test_user'
     end
+  end
+
+  def test_v1_1_endpoint
+    client = new_client(200,'{}',:api=>:v1_1)
+    client.users.show.hayesdavis?
+    assert_equal('/1.1/users/show/hayesdavis.json',client.transport.url.path,"API v1.1 should have the right path")
+  end
+
+  def test_v1_1_default_response_headers
+    client = new_client(200,'{}',:api=>:v1_1)
+    assert_equal(%w[x-rate-limit-limit x-rate-limit-remaining x-rate-limit-reset],client.response_headers)
   end
 
   private

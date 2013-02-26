@@ -87,16 +87,23 @@ module Grackle
     # refer to it wherever Grackle::Client uses an API symbol. You may wish 
     # to do this when Twitter introduces API versions greater than 1.
     TWITTER_API_HOSTS = {
-      :search=>'search.twitter.com', :v1=>'api.twitter.com/1',
+      :v1=>'api.twitter.com/1',
+      :v1_1=>'api.twitter.com/1.1',
+      :search=>'search.twitter.com',
       :upload=>'upload.twitter.com/1'
     }
     TWITTER_API_HOSTS[:rest] = TWITTER_API_HOSTS[:v1]
 
     # Contains the response headers from twitter
-    DEFAULT_RESPONSE_HEADERS =[
-      'x-ratelimit-limit',
-      'x-ratelimit-remaining',
-      'x-ratelimit-reset'
+    DEFAULT_RESPONSE_HEADERS = Hash.new(%w[
+      x-ratelimit-limit
+      x-ratelimit-remaining
+      x-ratelimit-reset
+    ])
+    DEFAULT_RESPONSE_HEADERS[:v1_1] = %w[
+      x-rate-limit-limit
+      x-rate-limit-remaining
+      x-rate-limit-reset
     ]
 
     #Basic OAuth information needed to communicate with Twitter
@@ -137,7 +144,7 @@ module Grackle
       self.timeout = options[:timeout] || 60
       self.auto_append_ids = options[:auto_append_ids] == false ? false : true
       self.auth = {}
-      self.response_headers = options[:response_headers] || DEFAULT_RESPONSE_HEADERS.clone
+      self.response_headers = options[:response_headers] || DEFAULT_RESPONSE_HEADERS[self.api].clone
       self.valid_http_codes = options[:valid_http_codes] || VALID_HTTP_CODES.clone
       if options.has_key?(:username) || options.has_key?(:password)
         #Use basic auth if :username and :password args are passed in
