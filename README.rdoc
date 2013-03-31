@@ -3,13 +3,12 @@ by Hayes Davis
 - http://twitter.com/hayesdavis
 - hayes [at] unionmetrics [dot] com
 - http://unionmetrics.com
-- http://hayesdavis.net
+- http://hayesdavis.tumblr.com
 
-== DESCRIPTION
-Grackle is a lightweight Ruby wrapper around the Twitter REST and Search APIs.
-It's based on my experience using the Twitter API to build http://cheaptweet.com
-and http://tweetreach.com. The main goal of Grackle is to never require a
-release when the Twitter API changes (which it often does) or in the face of a
+== DESCRIPTION Grackle is a lightweight Ruby wrapper around the Twitter REST
+API. It's based on my experience using the Twitter API to build
+http://tweetreach.com. The main goal of Grackle is to never require a release
+when the Twitter API changes (which it often does) or in the face of a
 particular Twitter API bug. As such it's somewhat different from other Twitter
 API libraries. It doesn't try to hide the Twitter "methods" under an access
 layer nor does it introduce concrete classes for the various objects returned by
@@ -26,7 +25,14 @@ http://groups.google.com/group/gracklerb. You can email me directly or @reply me
 on Twitter, but the group is better since the questions and responses will be
 available to everyone. I'll also make announcements there. There are some
 examples on the wiki at http://wiki.github.com/hayesdavis/grackle. If you prefer
-your information in 140 characters, follow @gracklerb[http://twitter.com/gracklerb].
+your information in 140 characters, follow
+@gracklerb[http://twitter.com/gracklerb].
+
+=== Twitter API 1.1 and Grackle 0.3.0
+Grackle 0.3.0 defaults to Twitter API 1.1 out of the box. If you have code that
+still relies on API 1.0, you can upgrade Grackle and still use API 1.0 by
+specifying that the client use the :v1 API:
+  client = Grackle::Client.new(:api=>:v1)
 
 ==USING GRACKLE
 
@@ -40,12 +46,15 @@ Before you do anything else, you'll need to
     :consumer_key=>'SOMECONSUMERKEYFROMTWITTER', :consumer_secret=>'SOMECONSUMERTOKENFROMTWITTER',
     :token=>'ACCESSTOKENACQUIREDONUSERSBEHALF', :token_secret=>'SUPERSECRETACCESSTOKENSECRET'
   })
-  
-OAuth can be a bit complicated. See the wiki[http://wiki.github.com/hayesdavis/grackle/grackle-and-oauth] 
-for more information on acquiring the keys, tokens and secrets needed to 
+
+OAuth can be a bit complicated. See the wiki[http://wiki.github.com/hayesdavis/grackle/grackle-and-oauth]
+for more information on acquiring the keys, tokens and secrets needed to
 successfully authenticate with OAuth.
 
-====Using No Auth
+====Using No Auth (DEPRECATED)
+As of May 7th, 2013, Twitter will be shutting down all API 1 endpoints and
+requiring all clients to use API 1.1 which requires OAuth authentication for all
+API calls.
   client = Grackle::Client.new
 
 ====Using Basic Auth (DEPRECATED)
@@ -55,23 +64,24 @@ As of August 31st, 2010, Twitter has deprecated basic authentication in favor of
 See Grackle::Client for more information about valid arguments to the constructor. It's quite configurable. Among other things, you can turn on ssl and specify custom headers. The calls below are pretty much as simple as it gets.
 
 ===Grackle Method Syntax
-Grackle uses a method syntax that corresponds to the Twitter API URLs with a few twists. Where you would have a slash in 
-a Twitter URL, that becomes a "." in a chained set of Grackle method calls. Each call in the method chain is used to build 
-Twitter URL path until a particular call is encountered which causes the request to be sent. Methods which will cause a 
-request to be execute include:
+Grackle uses a method syntax that corresponds to the Twitter API URLs with a few
+twists. Where you would have a slash in  a Twitter URL, that becomes a "." in a
+chained set of Grackle method calls. Each call in the method chain is used to
+build  Twitter URL path until a particular call is encountered which causes the
+request to be sent. Methods which will cause a  request to be execute include:
 - A method call ending in "?" will cause an HTTP GET to be executed
 - A method call ending in "!" will cause an HTTP POST to be executed
 - If a valid format such as .json, .xml, .rss or .atom is encounted, a get will be executed with that format
 - A format method can also include a ? or ! to determine GET or POST in that format respectively
 
 ===GETting Data
-The preferred and simplest way of executing a GET is to use the "?" method notation. This will use the default client 
+The preferred and simplest way of executing a GET is to use the "?" method notation. This will use the default client
 format (usually JSON, but see Formats section below):
   client.users.show? :screen_name=>'some_user' #http://twitter.com/users/show.json?screen_name=some_user
 
 You can force XML format by doing:
   client.users.show.xml? :screen_name=>'some_user' #http://twitter.com/users/show.xml?screen_name=some_user
-  
+
 You can force JSON:
   client.users.show.json? :screen_name=>'some_user' #http://twitter.com/users/show.json?screen_name=some_user
 
@@ -92,37 +102,42 @@ You can force a format. To update the authenticated user's status using the XML 
 
 Or, with JSON
   client.statuses.update.json! :status=>'this status is from grackle' #POST to http://twitter.com/statuses/update.json
-  
+
 ===Using Other HTTP Verbs
 To use HTTP verbs like DELETE or PUT, Grackle provides a slightly different syntax:
   client.put{ hayesdavis.lists.my_list :name=>'New Name' } #HTTP PUT
   client.delete{ direct_messages.destroy :id=>1 } #HTTP DELETE
-  
-You may specify any method chain you wish in the block. Note that if your method chain inside the block 
+
+You may specify any method chain you wish in the block. Note that if your method chain inside the block
 ends in a ! or ?, that the HTTP verb for the block will still be used. This means that
   client.delete{ direct_messages.destroy! :id=>1 } #Uses HTTP DELETE, not POST
   client.direct_messages.destroy! :id=>1 #Uses HTTP POST
 
-If for some reason you don't like the preferred block syntax above, you may specify a 
+If for some reason you don't like the preferred block syntax above, you may specify a
 parameter to your method chain called :__method (note the double underscores) to specify the HTTP verb:
   client.direct_messages.destroy! :id=>1, :__method=>:delete #HTTP DELETE
 
 ===Toggling APIs
-DEPRECATION NOTICE: The :rest API key (pointing to twitter.com) has been 
-deprecated in favor of the versioned API :v1 (pointing to api.twitter.com/1). 
-:v1 is now the default if you do not specify an API. Please do not use :rest 
-in your code.
+As of Grackle 0.3.0, the Grackle::Client sends all requests to the 1.1 Twitter
+API by default. If you want to send requests to the Twitter 1.0 API (which has
+been deprecated by Twitter and will be unavailable after May 7th, 2013), just
+use the Grackle::Client#api= method and set it to :v1. To toggle back, set it
+to :v1_1. All requests made after setting this attribute will go to that API.
 
-By default, the Grackle::Client sends all requests to the versioned Twitter REST API. If you want to send requests to 
-the Twitter Search API, just set Grackle::Client.api to :search. To toggle back, set it to be :v1. All requests made 
-after setting this attribute will go to that API.
+For convenience, you can also set the desired API in the Client constructor:
+  client = Grackle::Client.new(:api=>:v1)
 
-If you want to make a specific request to one API and not change the Client's overall api setting beyond that request, you can use the 
-bracket syntax like so:
-  client[:search].trends.daily? :exclude=>'hashtags'
-  client[:v1].users.show? :id=>'hayesdavis'
- 
-Search and REST requests are all built using the same method chaining and termination conventions.
+If you want to make a specific request to one API and not change the Client's
+overall api setting beyond that request, you can use the bracket syntax like so:
+  client[:v1].users.show? :screen_name=>'hayesdavis'
+  client[:v1_1].users.show? :screen_name=>'hayesdavis'
+
+All APIs use the same method chaining and termination conventions.
+
+DEPRECATION NOTICE: The :rest API key (pointing to twitter.com), the :search API
+key (pointing to search.twitter.com) and the :v1 API key
+(pointing to api.twitter.com/1) have all been deprecated in favor of the
+the :v1_1 API (pointing to api.twitter.com/1.1).
 
 ===Parameter handling
 - All parameters are URL encoded as necessary.
@@ -130,8 +145,9 @@ Search and REST requests are all built using the same method chaining and termin
 - If you use a Time object as a parameter, .httpdate will be called on it and that value will be used
 
 ===Return Values
-Regardless of the format used, Grackle returns an OpenStruct (actually a Grackle::TwitterStruct) of data. The attributes 
-available on these structs correspond to the data returned by Twitter.
+Regardless of the format used, Grackle returns an OpenStruct (actually a
+Grackle::TwitterStruct) of data. The attributes  available on these structs
+correspond to the data returned by Twitter.
 
 ===Rate Limits and the Response
 The Grackle client has a response method which is populated with information
@@ -142,7 +158,13 @@ because they can be used to retrieve the rate limit information that Twitter
 includes in a response.
 
   user = client.users.show.hayesdavis?
-  client.response.headers["X-Ratelimit-Remaining"]
+  client.response.headers["X-Rate-Limit-Remaining"] # 1.1 API
+
+  user = client[:v1].users.show.hayesdavis?
+  client.response.headers["X-Ratelimit-Remaining"]  # 1.0 API
+
+Note that Twitter has renamed the rate limit headers in API 1.1 to use
+"rate-limit" instead of API 1.0's "ratelimit".
 
 Not all headers returned by Twitter are included by default. You can control
 which headers are accessible with the response_headers attribute on the Client.
@@ -151,27 +173,32 @@ header values will be Strings so you'll need to convert rate limits, etc to ints
 in your code.
 
 ===Dealing with Errors
-If the request to Twitter does not return a status code of 200, then a TwitterError is thrown. This contains the HTTP method used, 
-the full request URI, the response status, the response body in text and a response object build by parsing the formatted error 
-returned by Twitter. It's a good idea to wrap your API calls with rescue clauses for Grackle::TwitterError.
+If the request to Twitter does not return a status code of 200, then a
+TwitterError is thrown. This contains the HTTP method used,  the full request
+URI, the response status, the response body in text and a response object build
+by parsing the formatted error  returned by Twitter. It's a good idea to wrap
+your API calls with rescue clauses for Grackle::TwitterError.
 
-If there is an unexpected connection error or Twitter returns data in the wrong format (which it can do), you'll still get a TwitterError.
+If there is an unexpected connection error or Twitter returns data in the wrong
+format (which it can do), you'll still get a TwitterError.
 
 ===Formats
-Twitter allows you to request data in particular formats. Grackle automatically 
-parses JSON and XML formatted responses and returns an OpenStruct. The 
-Grackle::Client has a default_format you can specify. By default, the 
-default_format is :json. If you don't include a named format in your method 
-chain as described above, but use a "?" or "!" then the 
+Twitter allows you to request data in particular formats. Grackle automatically
+parses JSON and XML formatted responses and returns an OpenStruct. The
+Grackle::Client has a default_format you can specify. By default, the
+default_format is :json. If you don't include a named format in your method
+chain as described above, but use a "?" or "!" then the
 Grackle::Client.default_format is used.
 
-If you specify a format that Grackle doesn't parse for you, you'll receive a 
-string containing the raw response body. If you want to receive the raw 
-response body even for XML or JSON formatted responses, tell the Grackle client 
-to use the +StringHandler+ handler. For example, the following code sets the 
+If you specify a format that Grackle doesn't parse for you, you'll receive a
+string containing the raw response body. If you want to receive the raw
+response body even for XML or JSON formatted responses, tell the Grackle client
+to use the +StringHandler+ handler. For example, the following code sets the
 Grackle client to return JSON instead of an OpenStruct:
 
   client = Grackle::Client.new(:handlers=>{:json=>Grackle::Handlers::StringHandler.new })
+
+DEPRECATION NOTICE: As to Twitter API 1.1, XML is no longer an accepted format.
 
 ===Odds and Ends
 If you need to append something to the request path that isn't a valid ruby method, e.g.
@@ -183,7 +210,7 @@ you can use the Grackle::Client#_ method like so:
 
 You'll need the following gems to use all features of Grackle:
 - json
-- oauth 
+- oauth
 - mime-types
 
 === Ruby Version Support
