@@ -95,10 +95,15 @@ module Grackle
     DEFAULT_API_HOST = :v1_1
 
     # Contains the response headers from twitter
-    DEFAULT_RESPONSE_HEADERS =[
+    DEFAULT_RESPONSE_HEADERS = [
+      # These are API 1 rate limit header names
       'x-ratelimit-limit',
       'x-ratelimit-remaining',
-      'x-ratelimit-reset'
+      'x-ratelimit-reset',
+      # These are API 1.1 rate limit header names
+      'x-rate-limit-limit',
+      'x-rate-limit-remaining',
+      'x-rate-limit-reset'
     ]
 
     #Basic OAuth information needed to communicate with Twitter
