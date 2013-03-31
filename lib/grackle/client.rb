@@ -92,6 +92,7 @@ module Grackle
       :upload=>'upload.twitter.com/1'
     }
     TWITTER_API_HOSTS[:rest] = TWITTER_API_HOSTS[:v1]
+    DEFAULT_API_HOST = :v1_1
 
     # Contains the response headers from twitter
     DEFAULT_RESPONSE_HEADERS =[
@@ -118,10 +119,10 @@ module Grackle
     # - :default_format     - Symbol of format to use when no format is specified in an API call (e.g. :json, :xml)
     # - :headers            - Hash of string keys and values for headers to pass in the HTTP request to twitter
     # - :ssl                - true or false to turn SSL on or off. Default is off (i.e. http://)
-    # - :api                - one of :rest, :search or :v1. :v1 is the default and :rest is now deprecated
+    # - :api                - one of :rest, :search, :v1 or :v1_1. :v1_1 is the default. :rest and :search are now deprecated
     # - :auth               - Hash of authentication type and credentials. Must have :type key with value one of :basic or :oauth
-    #   - :type=>:basic     - Include :username and :password keys
     #   - :type=>:oauth     - Include :consumer_key, :consumer_secret, :token and :token_secret keys
+    #   - :type=>:basic     - DEPRECATED. Include :username and :password keys
     # - :auto_append_format - true or false to include format in URI (e.g. /test.json). Default is true
     # - :response_headers   - array of headers to return from the response
     # - :valid_http_codes   - array of HTTP codes to consider valid (non-error)
@@ -129,11 +130,11 @@ module Grackle
       self.transport = Transport.new
       self.handlers = {:json=>Handlers::JSONHandler.new,:xml=>Handlers::XMLHandler.new,:unknown=>Handlers::StringHandler.new}
       self.handlers.merge!(options[:handlers]||{})
-      self.default_format = options[:default_format] || :json 
+      self.default_format = options[:default_format] || :json
       self.auto_append_format = options[:auto_append_format] == false ? false : true
       self.headers = {"User-Agent"=>"Grackle/#{Grackle::VERSION}"}.merge!(options[:headers]||{})
       self.ssl = options[:ssl] == true
-      self.api = options[:api] || :v1
+      self.api = options[:api] || DEFAULT_API_HOST
       self.api_hosts = TWITTER_API_HOSTS.clone
       self.timeout = options[:timeout] || 60
       self.auto_append_ids = options[:auto_append_ids] == false ? false : true
@@ -141,7 +142,7 @@ module Grackle
       self.response_headers = options[:response_headers] || DEFAULT_RESPONSE_HEADERS.clone
       self.valid_http_codes = options[:valid_http_codes] || VALID_HTTP_CODES.clone
       if options.has_key?(:username) || options.has_key?(:password)
-        #Use basic auth if :username and :password args are passed in
+        # DEPRECATED: Use basic auth if :username and :password args are passed in
         self.auth.merge!({:type=>:basic,:username=>options[:username],:password=>options[:password]})
       end
       #Handle auth mechanism that permits basic or oauth
@@ -152,7 +153,7 @@ module Grackle
         end
       end
     end
-               
+
     def method_missing(name,*args,&block)
       if block_given?
         return request_with_http_method_block(name,&block)

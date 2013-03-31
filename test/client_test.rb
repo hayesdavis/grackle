@@ -119,7 +119,7 @@ class ClientTest < Test::Unit::TestCase
     assert_equal('http',client.transport.url.scheme)
     assert(!Net::HTTP.last_instance.use_ssl?,'Net::HTTP instance should not be set to use SSL')
     assert_equal('api.twitter.com',client.transport.url.host)
-    assert_equal('/1/users/show.json',client.transport.url.path)
+    assert_equal('/1.1/users/show.json',client.transport.url.path)
     assert_equal('test_user',client.transport.options[:params][:screen_name])
     assert_equal('screen_name=test_user',Net::HTTP.request.path.split(/\?/)[1])
     assert_equal(12345,value.id)
@@ -167,30 +167,47 @@ class ClientTest < Test::Unit::TestCase
     client.statuses.public_timeline?
     assert_match(/\.xml$/,client.transport.url.path)
   end
-  
-  def test_api
-    client = new_client(200,'[{"id":1,"text":"test 1"}]',:api=>:search)
-    client.search? :q=>'test'
-    assert_equal('search.twitter.com',client.transport.url.host)
 
-    client[:rest].users.show.some_user?
-    assert_equal('api.twitter.com',client.transport.url.host)
+  def test_api_selection_with_api_accessor_changes_api_for_subsequent_requests
+    client = new_client(200,'[{"id":1,"text":"test 1"}]')
 
+    # :rest and :v1 are DEPRECATED
+    {:rest=>"1", :v1=>"1",:v1_1=>"1.1"}.each do |api_key,version|
+      client.api = api_key
+      client.users.show.some_user?
+      assert_equal('api.twitter.com',client.transport.url.host)
+      assert_equal("/#{version}/users/show/some_user.json",client.transport.url.path)
+      assert_equal(api_key,client.api,"API changed for all requests")
+    end
+
+    # :search is DEPRECATED
     client.api = :search
     client.trends?
     assert_equal('search.twitter.com',client.transport.url.host)
-    
-    client.api = :v1
-    client.search? :q=>'test'
-    assert_equal('api.twitter.com',client.transport.url.host)
-    assert_match(%r{^/1/search},client.transport.url.path)
-
-    client.api = :rest
-    client[:v1].users.show.some_user?
-    assert_equal('api.twitter.com',client.transport.url.host)
-    assert_match(%r{^/1/users/show/some_user},client.transport.url.path)
+    assert_equal("/trends.json",client.transport.url.path)
+    assert_equal(:search,client.api,"API changed to search for all requests")
   end
-  
+
+  def test_api_selection_with_api_override_changes_api_for_specific_request
+    client = new_client(200,'[{"id":1,"text":"test 1"}]')
+
+    original_api = client.api
+
+    # :rest and :v1 are DEPRECATED
+    {:rest=>"1", :v1=>"1",:v1_1=>"1.1"}.each do |api_key,version|
+      client[api_key].users.show.some_user?
+      assert_equal('api.twitter.com',client.transport.url.host)
+      assert_equal("/#{version}/users/show/some_user.json",client.transport.url.path)
+      assert_equal(original_api,client.api,"API should not change")
+    end
+
+    # :search is DEPRECATED
+    client[:search].trends?
+    assert_equal('search.twitter.com',client.transport.url.host)
+    assert_equal("/trends.json",client.transport.url.path)
+    assert_equal(original_api,client.api,"API should not change")
+  end
+
   def test_headers
     client = new_client(200,'[{"id":1,"text":"test 1"}]',:headers=>{'User-Agent'=>'TestAgent/1.0','X-Test-Header'=>'Header Value'})
     client.statuses.public_timeline?
@@ -259,14 +276,14 @@ class ClientTest < Test::Unit::TestCase
     client = new_client(200,'[{"id":1,"text":"test 1"}]')
     time = Time.now-60*60
     client.statuses.public_timeline? :since=>time  
-    assert_equal("/1/statuses/public_timeline.json?since=#{CGI::escape(time.httpdate)}",Net::HTTP.request.path)
+    assert_equal("/1.1/statuses/public_timeline.json?since=#{CGI::escape(time.httpdate)}",Net::HTTP.request.path)
   end
 
   def test_simple_http_method_block
     client = new_client(200,'[{"id":1,"text":"test 1"}]')
     client.delete { direct_messages.destroy :id=>1, :other=>'value' }
     assert_equal(:delete,client.transport.method, "delete block should use delete method")
-    assert_equal("/1/direct_messages/destroy/1.json",Net::HTTP.request.path)
+    assert_equal("/1.1/direct_messages/destroy/1.json",Net::HTTP.request.path)
     assert_equal('value',client.transport.options[:params][:other])
     
     client = new_client(200,'{"id":54321,"screen_name":"test_user"}')
@@ -275,7 +292,7 @@ class ClientTest < Test::Unit::TestCase
     assert_equal('http',client.transport.url.scheme)
     assert(!Net::HTTP.last_instance.use_ssl?,'Net::HTTP instance should not be set to use SSL')
     assert_equal('api.twitter.com',client.transport.url.host)
-    assert_equal('/1/users/show.json',client.transport.url.path)
+    assert_equal('/1.1/users/show.json',client.transport.url.path)
     assert_equal('test_user',client.transport.options[:params][:screen_name])
     assert_equal('screen_name=test_user',Net::HTTP.request.path.split(/\?/)[1])
     assert_equal(54321,value.id)    
@@ -308,7 +325,7 @@ class ClientTest < Test::Unit::TestCase
     assert_equal('http',client.transport.url.scheme)
     assert(!Net::HTTP.last_instance.use_ssl?,'Net::HTTP instance should not be set to use SSL')
     assert_equal('api.twitter.com',client.transport.url.host)
-    assert_equal('/1/users/show/12345.json',client.transport.url.path)
+    assert_equal('/1.1/users/show/12345.json',client.transport.url.path)
     assert_equal(12345,value.id)
   end
   
@@ -333,10 +350,10 @@ class ClientTest < Test::Unit::TestCase
   def test_auto_append_ids_is_honored
     client = new_client(200,'{"id":12345,"screen_name":"test_user"}')
     client.users.show.json? :id=>12345
-    assert_equal('/1/users/show/12345.json',client.transport.url.path,"Id should be appended by default")
+    assert_equal('/1.1/users/show/12345.json',client.transport.url.path,"Id should be appended by default")
     client.auto_append_ids = false
     client.users.show.json? :id=>12345
-    assert_equal('/1/users/show.json',client.transport.url.path,"Id should not be appended")
+    assert_equal('/1.1/users/show.json',client.transport.url.path,"Id should not be appended")
     assert_equal(12345,client.transport.options[:params][:id], "Id should be treated as a parameter")
     assert_equal("id=#{12345}",Net::HTTP.request.path.split(/\?/)[1],"id should be part of the query string")    
   end
@@ -344,7 +361,7 @@ class ClientTest < Test::Unit::TestCase
   def test_auto_append_ids_can_be_set_in_constructor
     client = new_client(200,'{"id":12345,"screen_name":"test_user"}',:auto_append_ids=>false)
     client.users.show.json? :id=>12345
-    assert_equal('/1/users/show.json',client.transport.url.path,"Id should not be appended")
+    assert_equal('/1.1/users/show.json',client.transport.url.path,"Id should not be appended")
     assert_equal(12345,client.transport.options[:params][:id], "Id should be treated as a parameter")
     assert_equal("id=#{12345}",Net::HTTP.request.path.split(/\?/)[1],"id should be part of the query string")    
   end
@@ -352,23 +369,23 @@ class ClientTest < Test::Unit::TestCase
   def test_auto_append_format_is_honored
     client = new_client(200,'{"id":12345,"screen_name":"test_user"}')
     client.users.show.hayesdavis?
-    assert_equal('/1/users/show/hayesdavis.json',client.transport.url.path,"Format should be appended by default")
+    assert_equal('/1.1/users/show/hayesdavis.json',client.transport.url.path,"Format should be appended by default")
     client.auto_append_format = false
     client.users.show.hayesdavis?
-    assert_equal('/1/users/show/hayesdavis',client.transport.url.path,"Format should not be appended to the URI")
+    assert_equal('/1.1/users/show/hayesdavis',client.transport.url.path,"Format should not be appended to the URI")
   end
 
   def test_auto_append_format_can_be_set_in_constructor
     client = new_client(200,'{"id":12345,"screen_name":"test_user"}',:auto_append_format=>false)
     client.users.show.hayesdavis?
-    assert_equal('/1/users/show/hayesdavis',client.transport.url.path,"Format should not be appended to the URI")
+    assert_equal('/1.1/users/show/hayesdavis',client.transport.url.path,"Format should not be appended to the URI")
   end
 
   def test_default_api
     client = Grackle::Client.new
-    assert_equal(:v1,client.api,":v1 should be default api")
+    assert_equal(:v1_1,client.api,":v1_1 should be default api")
   end
-  
+
   # Methods like Twitter's DELETE list membership expect that the user id will 
   # be form encoded like a POST request in the body. Net::HTTP seems to think 
   # that DELETEs can't have body parameters so we have to work around that.
@@ -378,7 +395,7 @@ class ClientTest < Test::Unit::TestCase
     assert_equal(:delete,client.transport.method,"Expected delete request")
     assert_equal('http',client.transport.url.scheme,"Expected scheme to be http")
     assert_equal('api.twitter.com',client.transport.url.host,"Expected request to be against twitter.com")
-    assert_equal('/1/some_user/some_list/members.json',client.transport.url.path)
+    assert_equal('/1.1/some_user/some_list/members.json',client.transport.url.path)
     assert_match(/user_id=12345/,Net::HTTP.request.body,"Parameters should be form encoded")
   end
 
@@ -414,7 +431,7 @@ class ClientTest < Test::Unit::TestCase
       assert_equal(:post,client.transport.method,"Expected post request")
       assert_equal('http',client.transport.url.scheme,"Expected scheme to be http")
       assert_equal('api.twitter.com',client.transport.url.host,"Expected request to be against twitter.com")
-      assert_equal('/1/statuses/update.json',client.transport.url.path)
+      assert_equal('/1.1/statuses/update.json',client.transport.url.path)
 
       if RUBY_VERSION >= "1.9.3"
         # 1.9.3 encodes a space with a + instead of %20
