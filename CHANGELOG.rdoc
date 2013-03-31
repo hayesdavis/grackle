@@ -1,3 +1,6 @@
+== 0.2.2 (2013-01-24)
+* Add :v1_1 api endpoint to client mapping to api.twitter.com/1.1; the default is still :v1.
+
 == 0.2.1 (2012-08-14)
 * Add :valid_http_codes option that tells grackle not to raise an error when encountering those statuses.
 
