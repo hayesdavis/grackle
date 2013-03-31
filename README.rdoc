@@ -5,19 +5,20 @@ by Hayes Davis
 - http://unionmetrics.com
 - http://hayesdavis.tumblr.com
 
-== DESCRIPTION Grackle is a lightweight Ruby wrapper around the Twitter REST
-API. It's based on my experience using the Twitter API to build
-http://tweetreach.com. The main goal of Grackle is to never require a release
-when the Twitter API changes (which it often does) or in the face of a
-particular Twitter API bug. As such it's somewhat different from other Twitter
-API libraries. It doesn't try to hide the Twitter "methods" under an access
-layer nor does it introduce concrete classes for the various objects returned by
-Twitter. Instead, calls to the Grackle client map directly to Twitter API URLs.
-The objects returned by API calls are generated as OpenStructs on the fly and
-make no assumptions about the presence or absence of any particular attributes.
-Taking this approach means that changes to URLs used by Twitter, parameters
-required by those URLs or return values will not require a new release. It will
-potentially require, however, some modifications to your code that uses Grackle.
+== DESCRIPTION
+Grackle is a lightweight Ruby wrapper around the Twitter REST API. It's based on
+my experience using the Twitter API to build http://tweetreach.com. The main
+goal of Grackle is to never require a release when the Twitter API changes
+(which it often does) or in the face of a particular Twitter API bug. As such
+it's somewhat different from other Twitter API libraries. It doesn't try to hide
+the Twitter "methods" under an access layer nor does it introduce concrete
+classes for the various objects returned by Twitter. Instead, calls to the
+Grackle client map directly to Twitter API URLs. The objects returned by API
+calls are generated as OpenStructs on the fly and make no assumptions about the
+presence or absence of any particular attributes. Taking this approach means
+that changes to URLs used by Twitter, parameters required by those URLs or
+return values will not require a new release. It will potentially require,
+however, some modifications to your code that uses Grackle.
 
 === Support and Announcements
 The preferred forum for questions and discussions is the Google group at
