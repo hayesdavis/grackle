@@ -184,7 +184,8 @@ module Grackle
             body << "Content-Type: #{mime_type.simplified}#{CRLF*2}"
             body << value.read
           else
-            body << "Content-Disposition: form-data; name=\"#{esc_key}\"#{CRLF*2}#{value}"
+            body << "Content-Disposition: form-data; name=\"#{esc_key}\"#{CRLF*2}"
+            body << value.force_encoding("ASCII-8BIT")
           end
           body << CRLF
         end
