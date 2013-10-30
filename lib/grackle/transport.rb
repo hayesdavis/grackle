@@ -94,7 +94,9 @@ module Grackle
         req = req_class(method).new(url.request_uri)
         http.read_timeout = options[:timeout]
         add_headers(req,options[:headers])
-        if file_param?(options[:params])
+        if options[:body]
+          add_body(req,options[:body])
+        elsif file_param?(options[:params])
           add_multipart_data(req,options[:params])
         else
           add_form_data(req,options[:params])
@@ -170,7 +172,11 @@ module Grackle
           req.set_form_data(params)
         end
       end
-    
+
+      def add_body(req,body)
+        req.body = body
+      end
+
       def add_multipart_data(req,params)
         boundary = Time.now.to_i.to_s(16)
         req["Content-Type"] = "multipart/form-data; boundary=#{boundary}"
