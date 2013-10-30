@@ -411,6 +411,12 @@ class ClientTest < Test::Unit::TestCase
     end
   end
 
+  def test_can_send_string_as_body
+    client = new_client(200,'{"id":12345,"screen_name":"test_user"}',:auto_append_format=>false)
+    client.foo.bar! "text!"
+    assert_equal("text!",Net::HTTP.request.body,"String argument should be sent as body")
+  end
+
   private
     def with_http_responder(responder)
       Net::HTTP.responder = responder

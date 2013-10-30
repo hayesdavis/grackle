@@ -45,13 +45,14 @@ module Grackle
   class Client
     
     class Request #:nodoc:
-      attr_accessor :client, :path, :method, :api, :ssl, :params
+      attr_accessor :client, :path, :method, :api, :ssl, :params, :body
       
       def initialize(client,api=:rest,ssl=true)
         self.client = client
         self.api = api
         self.ssl = ssl
         self.path = ''
+        self.body = nil
       end
       
       def <<(path)
@@ -210,8 +211,13 @@ module Grackle
     
     def append(name,*args)
       name = name.to_s.to_sym
-      #The args will be a hash, store them if they're specified
-      self.request.params = args.first
+      if args.first.kind_of?(String)
+        #The args are a body string, store that
+        self.request.body = args.first
+      else
+        #The args will be a hash, store them if they're specified
+        self.request.params = args.first
+      end
       #If method is a format name, execute using that format
       if format_invocation?(name)
         return call_with_format(name)
@@ -258,7 +264,9 @@ module Grackle
           @response = transport.request(
             http_method, request.url,
             :auth=>auth,:headers=>headers,
-            :params=>request.params,:timeout=>timeout,
+            :params=>request.params,
+            :body=>request.body,
+            :timeout=>timeout,
             :response_headers=>response_headers
           )
         rescue => e
