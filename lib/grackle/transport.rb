@@ -58,6 +58,7 @@ module Grackle
     
     class << self
       attr_accessor :ca_cert_file
+      attr_accessor :be_wildly_insecure
     end
     
     def req_class(method)
@@ -267,8 +268,8 @@ module Grackle
           # Turn off SSL verification which gets rid of warning in 1.8.x and 
           # an error in 1.9.x.
           conn.verify_mode = OpenSSL::SSL::VERIFY_NONE
-          unless @ssl_warning_shown
-            puts <<-EOS
+          unless @ssl_warning_shown || self.class.be_wildly_insecure
+            $stderr.puts <<-EOS
 Warning: SSL Verification is not being performed. While your communication is 
 being encrypted, the identity of the other party is not being confirmed nor the 
 SSL certificate verified. It's recommended that you specify a file containing 
