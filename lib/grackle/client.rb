@@ -1,14 +1,14 @@
 module Grackle
-  
+
   #Returned by methods which retrieve data from the API
   class TwitterStruct < OpenStruct
     attr_accessor :id
   end
 
-  #Raised by methods which call the API if a non-200 response status is received 
+  #Raised by methods which call the API if a non-200 response status is received
   class TwitterError < StandardError
     attr_accessor :method, :request_uri, :status, :response_body, :response_object
-  
+
     def initialize(method, request_uri, status, response_body, msg=nil)
       self.method = method
       self.request_uri = request_uri
@@ -16,9 +16,9 @@ module Grackle
       self.response_body = response_body
       super(msg||"#{self.method} #{self.request_uri} => #{self.status}: #{self.response_body}")
     end
-  end  
-  
-  # The Client is the public interface to Grackle. You build Twitter API calls using method chains. See the README for details 
+  end
+
+  # The Client is the public interface to Grackle. You build Twitter API calls using method chains. See the README for details
   # and new for information on valid options.
   #
   # ==Authentication
@@ -30,68 +30,69 @@ module Grackle
   #   client = Grackle.Client.new(:username=>'twitteruser',:password=>'secret') #deprecated
   #
   # ===OAuth
-  # OAuth is a relatively complex topic. For more information on OAuth applications see the official OAuth site at http://oauth.net and the 
+  # OAuth is a relatively complex topic. For more information on OAuth applications see the official OAuth site at http://oauth.net and the
   # OAuth specification at http://oauth.net/core/1.0. For authentication using OAuth, you will need do the following:
   # - Acquire a key and token for your application ("Consumer" in OAuth terms) from Twitter. Learn more here:  http://apiwiki.twitter.com/OAuth-FAQ
   # - Acquire an access token and token secret for the user that will be using OAuth to authenticate into Twitter
-  # The process of acquiring the access token and token secret are outside the scope of Grackle and will need to be coded on a per-application 
-  # basis. Grackle comes into play once you've acquired all of the above pieces of information. To create a Grackle::Client that uses OAuth once 
+  # The process of acquiring the access token and token secret are outside the scope of Grackle and will need to be coded on a per-application
+  # basis. Grackle comes into play once you've acquired all of the above pieces of information. To create a Grackle::Client that uses OAuth once
   # you've got all the necessary tokens and keys:
   #   client = Grackle::Client.new(:auth=>{
   #     :type=>:oauth,
   #     :consumer_key=>'SOMECONSUMERKEYFROMTWITTER, :consumer_secret=>'SOMECONSUMERTOKENFROMTWITTER',
   #     :token=>'ACCESSTOKENACQUIREDONUSERSBEHALF', :token_secret=>'SUPERSECRETACCESSTOKENSECRET'
-  #   }) 
+  #   })
   class Client
-    
+
     class Request #:nodoc:
       attr_accessor :client, :path, :method, :api, :ssl, :params
-      
+
       def initialize(client,api=:rest,ssl=true)
         self.client = client
         self.api = api
         self.ssl = ssl
         self.path = ''
       end
-      
+
       def <<(path)
         self.path << path
       end
-      
+
       def path?
         path.length > 0
       end
-    
+
       def url
         "#{scheme}://#{host}#{path}"
       end
-         
+
       def host
         client.api_hosts[api]
       end
-    
+
       def scheme
         ssl ? 'https' :'http'
       end
-      
+
       def params
         @params ||= {}
       end
     end
-    
+
     VALID_FORMATS     = [:json,:xml,:atom,:rss]
     VALID_HTTP_CODES  = [200]
 
-    # Contains the mapping of API name symbols to actual host (and path) 
-    # prefixes to use with requests. You can add your own to this hash and 
-    # refer to it wherever Grackle::Client uses an API symbol. You may wish 
+    # Contains the mapping of API name symbols to actual host (and path)
+    # prefixes to use with requests. You can add your own to this hash and
+    # refer to it wherever Grackle::Client uses an API symbol. You may wish
     # to do this when Twitter introduces API versions greater than 1.
     TWITTER_API_HOSTS = {
       :v1=>'api.twitter.com/1', :v1_1=>'api.twitter.com/1.1',
       :search=>'search.twitter.com',
-      :upload=>'upload.twitter.com/1'
+      :upload1=>'upload.twitter.com/1', :upload1_1=>'upload.twitter.com/1.1'
     }
     TWITTER_API_HOSTS[:rest] = TWITTER_API_HOSTS[:v1]
+    TWITTER_API_HOSTS[:upload] = TWITTER_API_HOSTS[:upload1_1]
     DEFAULT_API_HOST = :v1_1
 
     # Contains the response headers from twitter
@@ -112,11 +113,11 @@ module Grackle
       :access_token_path=>'/oauth/access_token',
       :authorize_path=>'/oauth/authorize'
     }
-    
-    attr_accessor :auth, :handlers, :default_format, :headers, :ssl, :api, 
+
+    attr_accessor :auth, :handlers, :default_format, :headers, :ssl, :api,
       :transport, :request, :api_hosts, :timeout, :auto_append_ids,
       :auto_append_format, :response_headers, :response, :valid_http_codes
-    
+
     # Arguments (all are optional):
     # - :username           - Twitter username to authenticate with (deprecated in favor of :auth arg)
     # - :password           - Twitter password to authenticate with (deprecated in favor of :auth arg)
@@ -165,49 +166,49 @@ module Grackle
       end
       append(name,*args)
     end
-    
+
     # Used to toggle APIs for a particular request without setting the Client's default API
     #   client[:rest].users.show.hayesdavis?
     def [](api_name)
       request.api = api_name
       self
     end
-    
+
     #Clears any pending request built up by chained methods but not executed
     def clear
       self.request = nil
     end
-    
+
     #Deprecated in favor of using the auth attribute.
     def username
       if auth[:type] == :basic
         auth[:username]
       end
     end
-    
-    #Deprecated in favor of using the auth attribute.    
+
+    #Deprecated in favor of using the auth attribute.
     def username=(value)
       unless auth[:type] == :basic
-        auth[:type] = :basic        
+        auth[:type] = :basic
       end
       auth[:username] = value
     end
-    
-    #Deprecated in favor of using the auth attribute.    
+
+    #Deprecated in favor of using the auth attribute.
     def password
       if auth[:type] == :basic
         auth[:password]
       end
     end
-    
-    #Deprecated in favor of using the auth attribute.    
+
+    #Deprecated in favor of using the auth attribute.
     def password=(value)
       unless auth[:type] == :basic
         auth[:type] = :basic
       end
       auth[:password] = value
     end
-    
+
     def append(name,*args)
       name = name.to_s.to_sym
       #The args will be a hash, store them if they're specified
@@ -220,7 +221,7 @@ module Grackle
       if name.to_s =~ /^(.*)(!|\?)$/
         name = $1.to_sym
         #! is a post, ? is a get - only set this if the method hasn't been set
-        self.request.method ||= ($2 == '!' ? :post : :get)          
+        self.request.method ||= ($2 == '!' ? :post : :get)
         if format_invocation?(name)
           return call_with_format(name)
         else
@@ -232,9 +233,9 @@ module Grackle
       self.request << "/#{name}"
       self
     end
-    
+
     alias_method :_, :append
-    
+
     protected
       def call_with_format(format)
         if auto_append_ids
@@ -249,7 +250,7 @@ module Grackle
       ensure
         clear
       end
-      
+
       def send_request
         begin
           http_method = (
@@ -264,11 +265,11 @@ module Grackle
         rescue => e
           puts e
           raise TwitterError.new(request.method,request.url,nil,nil,"Unexpected failure making request: #{e}")
-        end        
+        end
       end
-      
+
       def process_response(format,res)
-        fmt_handler = handler(format)        
+        fmt_handler = handler(format)
         begin
           unless self.valid_http_codes.include?(res.status)
             handle_error_response(res,fmt_handler)
@@ -281,25 +282,25 @@ module Grackle
           raise TwitterError.new(res.method,res.request_uri,res.status,res.body,"Unable to decode response: #{e}")
         end
       end
-      
+
       def request
         @request ||= Request.new(self,api,ssl)
       end
-      
+
       def handler(format)
         handlers[format] || handlers[:unknown]
       end
-      
+
       def handle_error_response(res,handler)
         err = TwitterError.new(res.method,res.request_uri,res.status,res.body)
         err.response_object = handler.decode_response(err.response_body)
-        raise err        
+        raise err
       end
-      
+
       def format_invocation?(name)
         self.request.path? && VALID_FORMATS.include?(name)
       end
-      
+
       def pending_request?
         !@request.nil?
       end
