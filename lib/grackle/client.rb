@@ -138,7 +138,7 @@ module Grackle
       self.default_format = options[:default_format] || :json
       self.auto_append_format = options[:auto_append_format] == false ? false : true
       self.headers = {"User-Agent"=>"Grackle/#{Grackle::VERSION}"}.merge!(options[:headers]||{})
-      self.ssl = options[:ssl] == true
+      self.ssl = options[:ssl] || true
       self.api = options[:api] || DEFAULT_API_HOST
       self.api_hosts = TWITTER_API_HOSTS.clone
       self.timeout = options[:timeout] || 60
